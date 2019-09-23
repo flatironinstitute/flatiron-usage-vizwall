@@ -1,0 +1,24 @@
+{
+  "name": "flatiron-usage-vizwall",
+  "version": "1.0.0",
+  "description": "An Electron application to display key slurm usage data on the vizwall.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": "https://github.com/elovero/flatiron-usage-vizwall",
+  "keywords": [
+    "Electron",
+    "visualization",
+    "SLURM",
+    "Flatiron Institute"
+  ],
+  "author": "Elizabeth Lovero",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^6.0.10"
+  },
+  "dependencies": {
+    "electron-reload": "^1.5.0"
+  }
+}
