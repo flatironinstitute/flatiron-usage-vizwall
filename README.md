@@ -1,4 +1,4 @@
-# flatiron-usage-vizwall
+# Slurm Watch
 
 An Electron application to display live slurm usage metrics at the Flatiron Institute.
 

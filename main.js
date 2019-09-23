@@ -1,7 +1,21 @@
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+   ____ __   __  __ ___   __  ___  _      __ ___  ______ _____ __ __
+  / __// /  / / / // _ \ /  |/  / | | /| / // _ |/_  __// ___// // /
+ _\ \ / /__/ /_/ // , _// /|_/ /  | |/ |/ // __ | / /  / /__ / _  /
+/___//____/\____//_/|_|/_/  /_/   |__/|__//_/ |_|/_/   \___//_//_/
+
+
+Slurm Watch: This is an application built with Electron.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
 // Modules to control application life and create native browser window
 const { app, BrowserWindow } = require("electron");
 require("electron-reload")(__dirname);
 const path = require("path");
+const fetch = require("electron-fetch");
+const base64 = require("base-64");
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -21,9 +35,6 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js")
     }
   });
-
-  //   // Hot module reloading
-  //   mainWindow.loadUrl(`file://${__dirname}/index.html`);
 
   // and load the index.html of the app.
   mainWindow.loadFile("index.html");

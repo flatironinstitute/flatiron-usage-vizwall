@@ -19,6 +19,9 @@
     "electron": "^6.0.10"
   },
   "dependencies": {
+    "base-64": "^0.1.0",
+    "chart.js": "^2.8.0",
+    "electron-fetch": "^1.3.0",
     "electron-reload": "^1.5.0"
   }
 }
