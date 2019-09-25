@@ -4,16 +4,28 @@
     <meta charset="UTF-8" />
     <title>Flatiron Slurm Data Usage</title>
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./flexboxgrid.css" />
   </head>
-  <body>
-    <div class="rainbow">
-      <h1>Hello World!</h1>
-      <p>
-        We are using Node.js <span id="node-version"></span>, Chromium
-        <span id="chrome-version"></span>, and Electron
-        <span id="electron-version"></span>.
-      </p>
-      <p>We are testing hot module replacement.</p>
+  <body class="body">
+    <header class="container-fluid">
+      <div class="row bottom-xs left-xs">
+        <h1 class="heading">Slurm Watch</h1>
+        <h4 id="lastMeasuredTime" class="alert"></h4>
+      </div>
+    </header>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-6">
+          <div class="chart-container">
+            <canvas id="cpuChart"></canvas>
+          </div>
+        </div>
+        <div class="col-xs-6">
+          <div class="chart-container">
+            <canvas id="gpuChart"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
     <script src="./renderer.js"></script>
   </body>
