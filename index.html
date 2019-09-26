@@ -8,8 +8,9 @@
   </head>
   <body class="body">
     <header class="container-fluid">
-      <div class="row bottom-xs left-xs">
+      <div class="row bottom-xs between-xs">
         <h1 class="heading">Slurm Watch</h1>
+        <h4 id="loading" class="alert">Loading</h4>
         <h4 id="lastMeasuredTime" class="alert"></h4>
       </div>
     </header>
@@ -23,7 +24,7 @@
         <div class="col-xs-6">
           <div class="chart-container row">
             <div class="col-xs-6"><canvas id="gpuChart1"></canvas></div>
-            <div class="col-xs-6"><canvas id="gpuChart2"></canvas></div>
+            <!-- <div class="col-xs-6"><canvas id="gpuChart2"></canvas></div> -->
           </div>
         </div>
       </div>

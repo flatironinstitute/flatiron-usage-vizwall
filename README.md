@@ -26,3 +26,6 @@ An Electron application to display live slurm usage metrics at the Flatiron Inst
 ## TODO:
 
 1. Combine flexboxgrid & stylesheet and minify
+2. Refactor barchart into something more reusable
+3. Add loading display
+4. Reorder barchart according to keys provided

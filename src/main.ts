@@ -5,50 +5,38 @@
  _\ \ / /__/ /_/ // , _// /|_/ /  | |/ |/ // __ | / /  / /__ / _  /
 /___//____/\____//_/|_|/_/  /_/   |__/|__//_/ |_|/_/   \___//_//_/
 
-
 Slurm Watch: This is an application built with Electron.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-// Modules to control application life and create native browser window
-const { app, BrowserWindow, powerSaveBlocker } = require("electron");
-const path = require("path");
+import { app, BrowserWindow } from "electron";
+import * as path from "path";
 
-// Keep a global reference of the window object, if you don't, the window will
-// be closed automatically when the JavaScript object is garbage collected.
-let mainWindow;
+let mainWindow: Electron.BrowserWindow;
 
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    fullscreen: true,
-    // TODO: Turn off for
-    closable: true,
-    transparent: false,
-    // Remove the frame from the window
-    frame: false,
     backgroundColor: "#002b36",
+    frame: false,
+    fullscreen: true,
+    transparent: false,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js")
-    }
+      preload: path.join(__dirname, "preload.js"),
+    },
   });
 
   // and load the index.html of the app.
-  mainWindow.loadFile("index.html");
+  mainWindow.loadFile(path.join(__dirname, "../index.html"));
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
 
-  // Prevent display sleep for duration of the app
-  // TODO: Do I need this for the kiosk?
-  powerSaveBlocker.start("prevent-display-sleep");
-
   // Emitted when the window is closed.
-  mainWindow.on("closed", function() {
+  mainWindow.on("closed", () => {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
-    powerSaveBlocker.stop();
     mainWindow = null;
   });
 }
@@ -59,17 +47,18 @@ function createWindow() {
 app.on("ready", createWindow);
 
 // Quit when all windows are closed.
-app.on("window-all-closed", function() {
+app.on("window-all-closed", () => {
   // On macOS it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== "darwin") app.quit();
+  if (process.platform !== "darwin") {
+    app.quit();
+  }
 });
 
-app.on("activate", function() {
+app.on("activate", () => {
   // On macOS it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (mainWindow === null) createWindow();
+  if (mainWindow === null) {
+    createWindow();
+  }
 });
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
