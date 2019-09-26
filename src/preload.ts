@@ -14,6 +14,11 @@ interface PrometheusObject {
   value: any;
 }
 
+interface DoughnutData {
+  popeye: Array<number>;
+  iron: Array<number>;
+}
+
 let dataMaster: any[] = [];
 
 function setLastMeasuredTime() {
@@ -29,30 +34,30 @@ const queries = [
     label: "Free CPUs (non-GPU) by location",
     name: "cpuFree",
     query:
-      'sort(sum(slurm_node_cpus{state="free",nodes!="gpu"}) by (cluster,nodes)) ',
+      'sort(sum(slurm_node_cpus{state="free",nodes!="gpu"}) by (cluster,nodes)) '
   },
   {
     label: "Percent Free CPUs (non-GPU) by location",
     name: "cpuPercentChart",
     query:
-      'sum(slurm_node_cpus{state="free",nodes!="gpu"}) by (cluster,nodes) / sum(slurm_node_cpus{nodes!="gpu"}) by (cluster,nodes)',
+      'sum(slurm_node_cpus{state="free",nodes!="gpu"}) by (cluster,nodes) / sum(slurm_node_cpus{nodes!="gpu"}) by (cluster,nodes)'
   },
   {
     label: "Total CPUs (non-GPU) by location",
     name: "cpuTotal",
-    query: 'sum(slurm_node_cpus{nodes!="gpu"}) by (cluster,nodes)',
+    query: 'sum(slurm_node_cpus{nodes!="gpu"}) by (cluster,nodes)'
   },
   {
     label: "GPUs free by location",
     name: "gpuFree",
     query:
-      'sort(sum(slurm_node_gpus{state="free",nodes="gpu"}) by (cluster,nodes))',
+      'sort(sum(slurm_node_gpus{state="free",nodes="gpu"}) by (cluster,nodes))'
   },
   {
     label: "Total GPUs by location",
     name: "gpuTotal",
-    query: 'sum(slurm_node_cpus{nodes="gpu"}) by (cluster,nodes)',
-  },
+    query: 'sum(slurm_node_cpus{nodes="gpu"}) by (cluster,nodes)'
+  }
 ];
 
 // Fetch data from Prometheus.
@@ -61,11 +66,11 @@ async function fetchData(queryObj: QueryObject) {
   const url = base + encodeURI(queryObj.query);
   return await fetch(url, {
     headers: new Headers({
-      Authorization: `Basic ${base64.encode(`prom:etheus`)}`,
-    }),
+      Authorization: `Basic ${base64.encode(`prom:etheus`)}`
+    })
   })
-    .then((res) => res.json())
-    .then((body) => {
+    .then(res => res.json())
+    .then(body => {
       if (body.status === "success") {
         return body.data.result;
       } else {
@@ -77,9 +82,9 @@ async function fetchData(queryObj: QueryObject) {
 }
 
 async function getDatasets() {
-  const fetchArr = queries.map(async (queryObj) => ({
+  const fetchArr = queries.map(async queryObj => ({
     data: await fetchData(queryObj),
-    name: queryObj.name,
+    name: queryObj.name
   }));
 
   return Promise.all(fetchArr);
@@ -94,21 +99,47 @@ function sortCPUData(cpudata: PrometheusObject[]) {
     return last.metric.cluster > next.metric.cluster ? 1 : -1;
   });
   // Remove mem from display.
-  return cpudata.filter((obj) => obj.metric.nodes !== "mem");
+  return cpudata.filter(obj => obj.metric.nodes !== "mem");
 }
 
 // Parse data for Chart
-function getChartData(name: string) {
-  const chartObj = dataMaster.find((data) => data.name === name).data;
+function getBarChartData(name: string) {
+  const chartObj = dataMaster.find(data => data.name === name).data;
   let filtered;
   if (name.charAt(0) === "c") {
     filtered = sortCPUData(chartObj);
   } else {
     filtered = chartObj.sort((a: PrometheusObject, b: PrometheusObject) =>
-      a.metric.cluster > b.metric.cluster ? 1 : -1,
+      a.metric.cluster > b.metric.cluster ? 1 : -1
     );
   }
   return filtered.map((obj: PrometheusObject) => obj.value[1]);
+}
+
+function getDoughnutData() {
+  const gpuData = dataMaster.filter(data => data.name.charAt(0) === "g");
+  const alpha = gpuData.sort((a: QueryObject, b: QueryObject) =>
+    a.name > b.name ? 1 : -1
+  );
+  // Doughnut data array order: available, used, total
+  let dough = {} as DoughnutData;
+  alpha.forEach(gpuQuery => {
+    gpuQuery.data.forEach((obj: any) => {
+      if (obj.metric.cluster === "popeye") {
+        dough.popeye.push(obj.value[1]);
+      } else {
+        dough.iron.push(obj.value[1]);
+      }
+    });
+  });
+
+  dough.forEach(element => {
+    console.log(element);
+  });
+  // for (const [key, value] of dough) {
+  //   value.splice(1, 0, value[1] - value[0]);
+  // }
+  console.log("postsplice", dough);
 }
 
 // Refresh data and last measured time.
@@ -125,7 +156,7 @@ function drawCharts() {
         "rgba(255, 206, 86, 1)",
         "rgba(75, 192, 192, 1)",
         "rgba(153, 102, 255, 1)",
-        "rgba(255, 159, 64, 1)",
+        "rgba(255, 159, 64, 1)"
       ],
       borderColor: [
         "rgba(255, 99, 132, 0.2)",
@@ -133,11 +164,11 @@ function drawCharts() {
         "rgba(255, 206, 86, 0.2)",
         "rgba(75, 192, 192, 0.2)",
         "rgba(153, 102, 255, 0.2)",
-        "rgba(255, 159, 64, 0.2)",
+        "rgba(255, 159, 64, 0.2)"
       ],
       borderWidth: 1,
-      data: getChartData("cpuFree"),
-      label: "Free CPUs (non-GPU) by location",
+      data: getBarChartData("cpuFree"),
+      label: "Free CPUs (non-GPU) by location"
     },
     {
       backgroundColor: [
@@ -146,7 +177,7 @@ function drawCharts() {
         "rgba(255, 206, 86, 0.2)",
         "rgba(75, 192, 192, 0.2)",
         "rgba(153, 102, 255, 0.2)",
-        "rgba(255, 159, 64, 0.2)",
+        "rgba(255, 159, 64, 0.2)"
       ],
       borderColor: [
         "rgba(255, 99, 132, 1)",
@@ -154,12 +185,12 @@ function drawCharts() {
         "rgba(255, 206, 86, 1)",
         "rgba(75, 192, 192, 1)",
         "rgba(153, 102, 255, 1)",
-        "rgba(255, 159, 64, 1)",
+        "rgba(255, 159, 64, 1)"
       ],
       borderWidth: 1,
-      data: getChartData("cpuTotal"),
-      label: "Total CPUs (non-GPU)",
-    },
+      data: getBarChartData("cpuTotal"),
+      label: "Total CPUs (non-GPU)"
+    }
   ];
   const cpuLabels = [
     "Iron: BNL",
@@ -167,7 +198,7 @@ function drawCharts() {
     "Iron: Infinite Band",
     "Iron: Skylake",
     "Popeye: Cascade Lake",
-    "Popeye: Skylake",
+    "Popeye: Skylake"
   ];
 
   const gpuDatasets = [
@@ -177,26 +208,27 @@ function drawCharts() {
         "rgba(54, 162, 235, 1)",
         "rgba(255, 206, 86, 1)",
         "rgba(75, 192, 192, 1)",
-        "rgba(153, 102, 255, 1)",
+        "rgba(153, 102, 255, 1)"
       ],
       borderColor: [
         "rgba(255, 99, 132, 0.2)",
         "rgba(54, 162, 235, 0.2)",
         "rgba(255, 206, 86, 0.2)",
         "rgba(75, 192, 192, 0.2)",
-        "rgba(153, 102, 255, 0.2)",
+        "rgba(153, 102, 255, 0.2)"
       ],
       data: [5, 10, 30, 5, 50],
-      label: "Dataset 1",
-    },
+      label: "Dataset 1"
+    }
   ];
 
   Barchart.drawStackedBarChart("cpuChart", cpuDatasets, cpuLabels);
+  getDoughnutData();
   Doughnut.drawDoughnutChart(
-    "gpuChart1",
     gpuDatasets,
+    "gpuChart1",
     ["Red", "Orange", "Yellow", "Green", "Blue"],
-    "Doughnut Test",
+    "Doughnut Test"
   );
   setInterval(updateDatasets, 30000);
 }

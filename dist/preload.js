@@ -39,6 +39,7 @@ exports.__esModule = true;
 var base64 = require("base-64");
 var moment = require("moment");
 var Barchart = require("./barchart");
+var Doughnut = require("./doughnut");
 var dataMaster = [];
 function setLastMeasuredTime() {
     var element = document.getElementById("lastMeasuredTime");
@@ -112,11 +113,10 @@ function getDatasets() {
                 return __generator(this, function (_b) {
                     switch (_b.label) {
                         case 0:
-                            _a = {
-                                name: queryObj.name
-                            };
+                            _a = {};
                             return [4 /*yield*/, fetchData(queryObj)];
                         case 1: return [2 /*return*/, (_a.data = _b.sent(),
+                                _a.name = queryObj.name,
                                 _a)];
                     }
                 });
@@ -137,11 +137,9 @@ function sortCPUData(cpudata) {
     return cpudata.filter(function (obj) { return obj.metric.nodes !== "mem"; });
 }
 // Parse data for Chart
-function getChartData(name) {
-    console.log("datamaster", dataMaster);
+function getBarChartData(name) {
     var chartObj = dataMaster.find(function (data) { return data.name === name; }).data;
     var filtered;
-    //
     if (name.charAt(0) === "c") {
         filtered = sortCPUData(chartObj);
     }
@@ -151,6 +149,31 @@ function getChartData(name) {
         });
     }
     return filtered.map(function (obj) { return obj.value[1]; });
+}
+function getDoughnutData() {
+    var gpuData = dataMaster.filter(function (data) { return data.name.charAt(0) === "g"; });
+    var alpha = gpuData.sort(function (a, b) {
+        return a.name > b.name ? 1 : -1;
+    });
+    // Doughnut data array order: available, used, total
+    var dough = {};
+    alpha.forEach(function (gpuQuery) {
+        gpuQuery.data.forEach(function (obj) {
+            if (obj.metric.cluster === "popeye") {
+                dough.popeye.push(obj.value[1]);
+            }
+            else {
+                dough.iron.push(obj.value[1]);
+            }
+        });
+    });
+    dough.forEach(function (element) {
+        console.log(element);
+    });
+    // for (const [key, value] of dough) {
+    //   value.splice(1, 0, value[1] - value[0]);
+    // }
+    console.log("postsplice", dough);
 }
 // Refresh data and last measured time.
 function updateDatasets() {
@@ -176,7 +199,7 @@ function drawCharts() {
                 "rgba(255, 159, 64, 0.2)"
             ],
             borderWidth: 1,
-            data: getChartData("cpuFree"),
+            data: getBarChartData("cpuFree"),
             label: "Free CPUs (non-GPU) by location"
         },
         {
@@ -197,7 +220,7 @@ function drawCharts() {
                 "rgba(255, 159, 64, 1)"
             ],
             borderWidth: 1,
-            data: getChartData("cpuTotal"),
+            data: getBarChartData("cpuTotal"),
             label: "Total CPUs (non-GPU)"
         }
     ];
@@ -209,7 +232,29 @@ function drawCharts() {
         "Popeye: Cascade Lake",
         "Popeye: Skylake"
     ];
+    var gpuDatasets = [
+        {
+            backgroundColor: [
+                "rgba(255, 99, 132, 1)",
+                "rgba(54, 162, 235, 1)",
+                "rgba(255, 206, 86, 1)",
+                "rgba(75, 192, 192, 1)",
+                "rgba(153, 102, 255, 1)"
+            ],
+            borderColor: [
+                "rgba(255, 99, 132, 0.2)",
+                "rgba(54, 162, 235, 0.2)",
+                "rgba(255, 206, 86, 0.2)",
+                "rgba(75, 192, 192, 0.2)",
+                "rgba(153, 102, 255, 0.2)"
+            ],
+            data: [5, 10, 30, 5, 50],
+            label: "Dataset 1"
+        }
+    ];
     Barchart.drawStackedBarChart("cpuChart", cpuDatasets, cpuLabels);
+    getDoughnutData();
+    Doughnut.drawDoughnutChart(gpuDatasets, "gpuChart1", ["Red", "Orange", "Yellow", "Green", "Blue"], "Doughnut Test");
     setInterval(updateDatasets, 30000);
 }
 function doTheThing() {

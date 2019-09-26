@@ -50,7 +50,6 @@ h6 {
 }
 .alert {
   color: var(--yellow);
-  padding: 0 2rem;
 }
 .chart-container {
   background: #eee;
