@@ -4,7 +4,10 @@
   "description": "An Electron application to display key slurm usage data on the vizwall.",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "build": "tsc",
+    "watch": "tsc -w",
+    "lint": "tslint -c tslint.json -p tsconfig.json",
+    "start": "npm run build && electron ./dist/main.js"
   },
   "repository": "https://github.com/elovero/flatiron-usage-vizwall",
   "keywords": [
@@ -16,7 +19,9 @@
   "author": "Elizabeth Lovero",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^6.0.10"
+    "electron": "^6.0.10",
+    "tslint": "^5.20.0",
+    "typescript": "^3.6.3"
   },
   "dependencies": {
     "base-64": "^0.1.0",

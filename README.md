@@ -22,3 +22,7 @@ An Electron application to display live slurm usage metrics at the Flatiron Inst
 
     1. spikes in the week?
     2. avg wait time
+
+## TODO:
+
+1. Combine flexboxgrid & stylesheet and minify

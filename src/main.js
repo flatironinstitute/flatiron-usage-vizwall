@@ -12,7 +12,6 @@ Slurm Watch: This is an application built with Electron.
 
 // Modules to control application life and create native browser window
 const { app, BrowserWindow, powerSaveBlocker } = require("electron");
-require("electron-reload")(__dirname);
 const path = require("path");
 const fetch = require("electron-fetch");
 
@@ -50,7 +49,7 @@ function createWindow() {
     // Dereference the window object, usually you would store windows
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
-    powerSaveBlocker.stop(id);
+    powerSaveBlocker.stop();
     mainWindow = null;
   });
 }
