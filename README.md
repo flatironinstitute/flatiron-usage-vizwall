@@ -2,8 +2,6 @@
 
 An Electron application to display live slurm usage metrics at the Flatiron Institute.
 
-# Notes
-
 ## Completed charts
 
 1. Stacked bar: CPUs free by location / total CPU nodes available
