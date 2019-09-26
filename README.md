@@ -19,7 +19,7 @@ An Electron application to display live slurm usage metrics at the Flatiron Inst
 3. CPU efficiency by center \*racecars
 4. Num queue items by center / location (toggle animated)
 
-## TODO:
+## Misc To Do:
 
 1. Fix doughnut gpu chart
 2. Combine flexboxgrid & stylesheet and minify
