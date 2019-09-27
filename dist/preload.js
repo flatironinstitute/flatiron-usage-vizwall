@@ -155,25 +155,39 @@ function getDoughnutData() {
     var alpha = gpuData.sort(function (a, b) {
         return a.name > b.name ? 1 : -1;
     });
-    // Doughnut data array order: available, used, total
     var dough = {};
+    dough = {
+        iron: {
+            backgroundColor: ["rgba(153, 102, 255, 1)", "rgba(153, 102, 255, 0.2)"],
+            borderColor: ["rgba(153, 102, 255, 1)", "rgba(153, 102, 255, 1)"],
+            data: [],
+            label: "Iron"
+        },
+        popeye: {
+            backgroundColor: ["rgba(255, 99, 132, 1)", "rgba(255, 99, 132, 0.2)"],
+            borderColor: ["rgba(255, 99, 132, 1)", "rgba(255, 99, 132, 1)"],
+            data: [],
+            label: "Popeye"
+        }
+    };
     alpha.forEach(function (gpuQuery) {
         gpuQuery.data.forEach(function (obj) {
             if (obj.metric.cluster === "popeye") {
-                dough.popeye.push(obj.value[1]);
+                dough.popeye.data.push(obj.value[1]);
             }
             else {
-                dough.iron.push(obj.value[1]);
+                dough.iron.data.push(obj.value[1]);
             }
         });
     });
-    dough.forEach(function (element) {
-        console.log(element);
-    });
-    // for (const [key, value] of dough) {
-    //   value.splice(1, 0, value[1] - value[0]);
-    // }
-    console.log("postsplice", dough);
+    // Doughnut data array order: available, used, total
+    for (var value in dough) {
+        if (dough.hasOwnProperty(value)) {
+            var arr = dough[value].data;
+            arr.splice(1, 1, arr[1] - arr[0]);
+        }
+    }
+    return dough;
 }
 // Refresh data and last measured time.
 function updateDatasets() {
@@ -232,29 +246,16 @@ function drawCharts() {
         "Popeye: Cascade Lake",
         "Popeye: Skylake"
     ];
-    var gpuDatasets = [
-        {
-            backgroundColor: [
-                "rgba(255, 99, 132, 1)",
-                "rgba(54, 162, 235, 1)",
-                "rgba(255, 206, 86, 1)",
-                "rgba(75, 192, 192, 1)",
-                "rgba(153, 102, 255, 1)"
-            ],
-            borderColor: [
-                "rgba(255, 99, 132, 0.2)",
-                "rgba(54, 162, 235, 0.2)",
-                "rgba(255, 206, 86, 0.2)",
-                "rgba(75, 192, 192, 0.2)",
-                "rgba(153, 102, 255, 0.2)"
-            ],
-            data: [5, 10, 30, 5, 50],
-            label: "Dataset 1"
-        }
-    ];
     Barchart.drawStackedBarChart("cpuChart", cpuDatasets, cpuLabels);
-    getDoughnutData();
-    Doughnut.drawDoughnutChart(gpuDatasets, "gpuChart1", ["Red", "Orange", "Yellow", "Green", "Blue"], "Doughnut Test");
+    var gpuData = {};
+    gpuData = getDoughnutData();
+    var index = 1;
+    for (var value in gpuData) {
+        if (gpuData.hasOwnProperty(value)) {
+            Doughnut.drawDoughnutChart([gpuData[value]], "gpuChart" + index, ["In Use", "Free"], "" + value.toString().toUpperCase());
+        }
+        index++;
+    }
     setInterval(updateDatasets, 30000);
 }
 function doTheThing() {

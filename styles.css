@@ -35,7 +35,7 @@ h5,
 h6 {
   font-family: "Gibson", "HelveticaNeue-Light", "Helvetica Neue Light",
     "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
-  color: #eee8d5;ß
+  color: #eee8d5;
 }
 .body {
   display: flex;
@@ -45,6 +45,7 @@ h6 {
   flex-direction: column;
 }
 .heading {
+  font-family: "Poller One", cursive;
   font-style: italic;
   font-weight: 700;
 }
@@ -54,4 +55,5 @@ h6 {
 .chart-container {
   background: #eee;
   max-height: 90vh;
+  margin: 20px;
 }

@@ -7,12 +7,12 @@ An Electron application to display live slurm usage metrics at the Flatiron Inst
 ## Completed charts
 
 1. Stacked bar: CPUs free by location / total CPU nodes available
+2. Doughnuts: GPUs free by location (rusty & popeye)
 
 ## Charts to produce
 
-1. Doughnuts: GPUs free by location (rusty & popeye)
-2. TBD: Currently queued jobs by location
-3. TBD: Iron broadwell & skylight - CPU nodes currently allocated by account (or partition) aka center
+1. TBD: Currently queued jobs by location
+2. TBD: Iron broadwell & skylight - CPU nodes currently allocated by account (or partition) aka center
 
 ## V2 Features
 
@@ -23,7 +23,7 @@ An Electron application to display live slurm usage metrics at the Flatiron Inst
 
 ## TODO:
 
-1. Fix doughnut gpu chart
-2. Combine flexboxgrid & stylesheet and minify
-3. Reorder barchart according to keys provided
-4. Style and add cool logo.
+1. Combine flexboxgrid & stylesheet and minify
+2. Reorder barchart according to keys provided
+3. Style and add cool fonts.
+4. Improve labeling (show amounts)

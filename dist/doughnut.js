@@ -13,10 +13,12 @@ function drawDoughnutChart(datasets, element, labels, title) {
                 animateRotate: true,
                 animateScale: true
             },
+            circumference: Math.PI,
             legend: {
                 position: "top"
             },
             responsive: true,
+            rotation: Math.PI,
             title: {
                 display: true,
                 text: title
