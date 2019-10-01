@@ -2,24 +2,40 @@
 
 An Electron application to display live slurm usage metrics at the Flatiron Institute.
 
-## Completed charts
+## Startup Scripts
+
+To start SlurmWatch locally use:
+
+```
+npm run start
+```
+
+To run the linter and auto-correct linting errors run:
+
+```
+npm run lint
+```
+
+## Notes
+
+### Completed charts
 
 - Stacked bar: CPUs free by location / total CPU nodes available
 - Doughnuts: GPUs free by location (rusty & popeye)
 
-## Charts to produce
+### Charts to produce
 
 - TBD: Currently queued jobs by location
 - TBD: Iron broadwell & skylight - CPU nodes currently allocated by account (or partition) aka center
 
-## Misc todos
+### Misc todos
 
 - Combine flexboxgrid & stylesheet and minify
 - Reorder barchart according to keys provided
 - Style and add cool fonts
 - Improve labeling
 
-## Other charts for potential v2?
+### Other charts for potential v2?
 
 - spikes in the week or another bit of timeseries data
 - avg wait time
