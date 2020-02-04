@@ -6,7 +6,7 @@
  _\ \ / /__/ /_/ // , _// /|_/ /  | |/ |/ // __ | / /  / /__ / _  /
 /___//____/\____//_/|_|/_/  /_/   |__/|__//_/ |_|/_/   \___//_//_/
 
-Slurm Watch: This is an application built with Electron.
+⚡Slurm Watch⚡: This is an application built with Electron.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 exports.__esModule = true;

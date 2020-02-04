@@ -5,7 +5,7 @@
  _\ \ / /__/ /_/ // , _// /|_/ /  | |/ |/ // __ | / /  / /__ / _  /
 /___//____/\____//_/|_|/_/  /_/   |__/|__//_/ |_|/_/   \___//_//_/
 
-Slurm Watch: This is an application built with Electron.
+⚡Slurm Watch⚡: This is an application built with Electron.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -22,8 +22,8 @@ function createWindow() {
     fullscreen: true,
     transparent: false,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-    },
+      preload: path.join(__dirname, "preload.js")
+    }
   });
 
   // and load the index.html of the app.

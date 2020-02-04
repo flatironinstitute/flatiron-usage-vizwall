@@ -15,13 +15,18 @@ interface PrometheusObject {
 }
 
 let dataMaster: any[] = [];
+let lastMeasuredTime: string;
 
 function setLastMeasuredTime() {
+  lastMeasuredTime = getNow();
   const element = document.getElementById("lastMeasuredTime");
-  const now = moment().format("MMMM Do YYYY, h:mm:ss a");
   if (element) {
-    element.innerText = `${now}`;
+    element.innerText = `${lastMeasuredTime}`;
   }
+}
+
+function getNow() {
+  return moment().format("MMMM Do YYYY, h:mm:ss a");
 }
 
 const queries = [
@@ -150,12 +155,9 @@ function getDoughnutData() {
   return dough;
 }
 
-// Refresh data and last measured time.
-function updateDatasets() {
-  doTheThing();
-}
-
 function drawCharts() {
+  console.log("in drawing charts");
+  toggleLoading(); // loading off
   const cpuDatasets = [
     {
       backgroundColor: [
@@ -225,29 +227,32 @@ function drawCharts() {
     }
     index++;
   }
-
-  setInterval(updateDatasets, 30000);
-}
-
-async function doTheThing() {
+  // Set timer
   setLastMeasuredTime();
-  dataMaster = await getDatasets();
-  drawCharts();
 }
 
 function toggleLoading() {
   const loading = document.getElementById("loading");
-  if (loading.style.display === "none") {
+  if (!loading.style.display) {
     loading.style.display = "block";
   } else {
     loading.style.display = "none";
   }
 }
 
+async function doTheThing() {
+  toggleLoading(); // loading on
+  dataMaster = await getDatasets();
+  drawCharts();
+  await sleep(3000);
+  doTheThing();
+}
+
+async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // Set loading screen for initial display
 window.addEventListener("DOMContentLoaded", () => {
-  setLastMeasuredTime();
-  toggleLoading();
+  doTheThing();
 });
-
-doTheThing();
