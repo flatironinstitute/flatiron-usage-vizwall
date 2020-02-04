@@ -42,14 +42,12 @@ var Barchart = require("./barchart");
 var Doughnut = require("./doughnut");
 var dataMaster = [];
 var lastMeasuredTime;
-var count = 0;
 function setLastMeasuredTime() {
+    lastMeasuredTime = getNow();
     var element = document.getElementById("lastMeasuredTime");
     if (element) {
-        element.innerText = "" + getNow();
+        element.innerText = "" + lastMeasuredTime;
     }
-    count++;
-    console.log("This loop has run " + count + " times");
 }
 function getNow() {
     return moment().format("MMMM Do YYYY, h:mm:ss a");
@@ -79,6 +77,11 @@ var queries = [
         label: "Total GPUs by location",
         name: "gpuTotal",
         query: 'sum(slurm_node_cpus{nodes="gpu"}) by (cluster,nodes)'
+    },
+    {
+        label: "Slurm queued pending job requests",
+        name: "queued",
+        query: 'sum(slurm_job_count{state="pending"}) by (account)'
     }
 ];
 // Fetch data from Prometheus.
@@ -195,9 +198,12 @@ function getDoughnutData() {
     }
     return dough;
 }
-function drawCharts() {
-    console.log("in drawing charts");
-    toggleLoading(); // loading off
+function getQueuedData() {
+    var queuedData = dataMaster.filter(function (data) { return data.name.charAt(0) === "q"; });
+    console.log("🌗", queuedData);
+}
+function initializeBarChart() {
+    // TODO: FIX THESE COLORS DOG
     var cpuDatasets = [
         {
             backgroundColor: [
@@ -251,6 +257,12 @@ function drawCharts() {
         "Popeye: Skylake"
     ];
     Barchart.drawStackedBarChart("cpuChart", cpuDatasets, cpuLabels);
+}
+function drawCharts() {
+    toggleLoading(); // loading off
+    // Draw bar chart
+    initializeBarChart();
+    // Draw doughnut chart
     var gpuData = {};
     gpuData = getDoughnutData();
     var index = 1;
@@ -260,6 +272,8 @@ function drawCharts() {
         }
         index++;
     }
+    // Draw queued data
+    getQueuedData();
     // Set timer
     setLastMeasuredTime();
 }
@@ -277,13 +291,12 @@ function doTheThing() {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    console.log("Starting at " + count + " times");
                     toggleLoading(); // loading on
                     return [4 /*yield*/, getDatasets()];
                 case 1:
                     dataMaster = _a.sent();
                     drawCharts();
-                    return [4 /*yield*/, sleep(3000)];
+                    return [4 /*yield*/, sleep(30000)];
                 case 2:
                     _a.sent();
                     doTheThing();

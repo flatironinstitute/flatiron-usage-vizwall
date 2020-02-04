@@ -57,6 +57,11 @@ const queries = [
     label: "Total GPUs by location",
     name: "gpuTotal",
     query: 'sum(slurm_node_cpus{nodes="gpu"}) by (cluster,nodes)'
+  },
+  {
+    label: "Slurm queued pending job requests",
+    name: "queued",
+    query: 'sum(slurm_job_count{state="pending"}) by (account)'
   }
 ];
 
@@ -155,9 +160,13 @@ function getDoughnutData() {
   return dough;
 }
 
-function drawCharts() {
-  console.log("in drawing charts");
-  toggleLoading(); // loading off
+function getQueuedData() {
+  const queuedData = dataMaster.filter(data => data.name.charAt(0) === "q");
+  console.log("🌗", queuedData);
+}
+
+function initializeBarChart() {
+  // TODO: FIX THESE COLORS DOG
   const cpuDatasets = [
     {
       backgroundColor: [
@@ -210,12 +219,19 @@ function drawCharts() {
     "Popeye: Cascade Lake",
     "Popeye: Skylake"
   ];
-
   Barchart.drawStackedBarChart("cpuChart", cpuDatasets, cpuLabels);
+}
+
+function drawCharts() {
+  toggleLoading(); // loading off
+
+  // Draw bar chart
+  initializeBarChart();
+
+  // Draw doughnut chart
   let gpuData: any = {};
   gpuData = getDoughnutData();
   let index = 1;
-
   for (const value in gpuData) {
     if (gpuData.hasOwnProperty(value)) {
       Doughnut.drawDoughnutChart(
@@ -227,6 +243,10 @@ function drawCharts() {
     }
     index++;
   }
+
+  // Draw queued data
+  getQueuedData();
+
   // Set timer
   setLastMeasuredTime();
 }
@@ -244,7 +264,7 @@ async function doTheThing() {
   toggleLoading(); // loading on
   dataMaster = await getDatasets();
   drawCharts();
-  await sleep(3000);
+  await sleep(30000);
   doTheThing();
 }
 
