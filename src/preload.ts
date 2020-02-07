@@ -2,6 +2,8 @@ import * as base64 from "base-64";
 import * as moment from "moment";
 import * as Barchart from "./barchart";
 import * as Doughnut from "./doughnut";
+import * as LineChart from "./linechart";
+import * as Table from "./table";
 
 interface QueryObject {
   label: string;
@@ -13,6 +15,13 @@ interface PrometheusObject {
   metric: any;
   value: any;
 }
+
+interface QueueObject {
+  data: PrometheusObject[];
+  name: string;
+}
+
+interface QueuedData extends Array<QueueObject> {}
 
 let dataMaster: any[] = [];
 let lastMeasuredTime: string;
@@ -160,9 +169,8 @@ function getDoughnutData() {
   return dough;
 }
 
-function getQueuedData() {
-  const queuedData = dataMaster.filter(data => data.name.charAt(0) === "q");
-  console.log("🌗", queuedData);
+function getCurrentQueueData() {
+  return dataMaster.filter(data => data.name.charAt(0) === "q")[0].data;
 }
 
 function initializeBarChart() {
@@ -225,10 +233,10 @@ function initializeBarChart() {
 function drawCharts() {
   toggleLoading(); // loading off
 
-  // Draw bar chart
+  // Draw cpu chart
   initializeBarChart();
 
-  // Draw doughnut chart
+  // Draw gpu chart
   let gpuData: any = {};
   gpuData = getDoughnutData();
   let index = 1;
@@ -244,8 +252,26 @@ function drawCharts() {
     index++;
   }
 
-  // Draw queued data
-  getQueuedData();
+  // Draw queued data table
+  let currentQueuedData: any = getCurrentQueueData();
+  currentQueuedData.sort((a: PrometheusObject, b: PrometheusObject) =>
+    a.metric.account > b.metric.account ? 1 : -1
+  );
+  Table.drawTable(
+    "queueTable",
+    currentQueuedData,
+    ["Center", "Count"],
+    "Current Queue Count"
+  );
+
+  // TODO: Swap with line chart
+  let queuedData = [{ label: "first dataset", data: [0, 20, 40, 50] }];
+  LineChart.drawLineChart(
+    "lineChart1",
+    queuedData,
+    ["January", "Feb", "March", "April"],
+    "Slurm queued (pending) by Center"
+  );
 
   // Set timer
   setLastMeasuredTime();

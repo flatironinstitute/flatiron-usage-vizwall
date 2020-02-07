@@ -40,6 +40,8 @@ var base64 = require("base-64");
 var moment = require("moment");
 var Barchart = require("./barchart");
 var Doughnut = require("./doughnut");
+var LineChart = require("./linechart");
+var Table = require("./table");
 var dataMaster = [];
 var lastMeasuredTime;
 function setLastMeasuredTime() {
@@ -198,9 +200,8 @@ function getDoughnutData() {
     }
     return dough;
 }
-function getQueuedData() {
-    var queuedData = dataMaster.filter(function (data) { return data.name.charAt(0) === "q"; });
-    console.log("🌗", queuedData);
+function getCurrentQueueData() {
+    return dataMaster.filter(function (data) { return data.name.charAt(0) === "q"; })[0].data;
 }
 function initializeBarChart() {
     // TODO: FIX THESE COLORS DOG
@@ -260,9 +261,9 @@ function initializeBarChart() {
 }
 function drawCharts() {
     toggleLoading(); // loading off
-    // Draw bar chart
+    // Draw cpu chart
     initializeBarChart();
-    // Draw doughnut chart
+    // Draw gpu chart
     var gpuData = {};
     gpuData = getDoughnutData();
     var index = 1;
@@ -272,8 +273,15 @@ function drawCharts() {
         }
         index++;
     }
-    // Draw queued data
-    getQueuedData();
+    // Draw queued data table
+    var currentQueuedData = getCurrentQueueData();
+    currentQueuedData.sort(function (a, b) {
+        return a.metric.account > b.metric.account ? 1 : -1;
+    });
+    Table.drawTable("queueTable", currentQueuedData, ["Center", "Count"], "Current Queue Count");
+    // TODO: Swap with line chart
+    var queuedData = [{ label: "first dataset", data: [0, 20, 40, 50] }];
+    LineChart.drawLineChart("lineChart1", queuedData, ["January", "Feb", "March", "April"], "Slurm queued (pending) by Center");
     // Set timer
     setLastMeasuredTime();
 }
