@@ -84,6 +84,8 @@ const queries = [
 async function fetchData(queryObj: QueryObject) {
   const base = "http://prometheus.flatironinstitute.org/api/v1/query?query=";
   const url = base + encodeURI(queryObj.query);
+
+  console.log("🖥️", url);
   return await fetch(url, {
     headers: new Headers({
       Authorization: `Basic ${base64.encode(`prom:etheus`)}`
@@ -290,7 +292,7 @@ function drawCharts() {
   // TODO: Swap with line chart
   buildLineChart();
 
-  console.log("🌜", getWaitTime());
+  console.log("🌜🗓️", dataMaster);
 
   // Set timer
   setLastMeasuredTime();

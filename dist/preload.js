@@ -100,6 +100,7 @@ function fetchData(queryObj) {
                 case 0:
                     base = "http://prometheus.flatironinstitute.org/api/v1/query?query=";
                     url = base + encodeURI(queryObj.query);
+                    console.log("🖥️", url);
                     return [4 /*yield*/, fetch(url, {
                             headers: new Headers({
                                 Authorization: "Basic " + base64.encode("prom:etheus")
@@ -296,7 +297,7 @@ function drawCharts() {
     buildTable(); // Draw queued data table
     // TODO: Swap with line chart
     buildLineChart();
-    console.log("🌜", getWaitTime());
+    console.log("🌜🗓️", dataMaster);
     // Set timer
     setLastMeasuredTime();
 }

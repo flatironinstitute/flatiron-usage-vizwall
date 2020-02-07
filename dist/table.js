@@ -3,7 +3,6 @@ exports.__esModule = true;
 function drawTable(element, dataset, labels, title) {
     var ctx = document.getElementById(element);
     ctx.innerHTML = "";
-    console.log("CLEARED EXISTING CONTEXT", ctx);
     var table = document.createElement("table");
     var thead = document.createElement("thead");
     var trHead = document.createElement("tr");

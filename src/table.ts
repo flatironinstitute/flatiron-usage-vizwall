@@ -11,7 +11,6 @@ export function drawTable(
 ) {
   const ctx = document.getElementById(element) as HTMLCanvasElement;
   ctx.innerHTML = "";
-  console.log("CLEARED EXISTING CONTEXT", ctx);
   let table = document.createElement("table");
   let thead = document.createElement("thead");
   let trHead = document.createElement("tr");
