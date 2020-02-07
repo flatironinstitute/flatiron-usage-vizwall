@@ -71,6 +71,12 @@ const queries = [
     label: "Slurm queued pending job requests",
     name: "queued",
     query: 'sum(slurm_job_count{state="pending"}) by (account)'
+  },
+  {
+    label: "Total queue wait time",
+    name: "waitTime",
+    query:
+      'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)&start=1581019440&end=1581105840&step=30'
   }
 ];
 
@@ -173,7 +179,11 @@ function getCurrentQueueData() {
   return dataMaster.filter(data => data.name.charAt(0) === "q")[0].data;
 }
 
-function initializeBarChart() {
+function getWaitTime() {
+  return dataMaster.filter(data => data.name.charAt(0) === "w")[0].data;
+}
+
+function buildBarChart() {
   // TODO: FIX THESE COLORS DOG
   const cpuDatasets = [
     {
@@ -230,13 +240,7 @@ function initializeBarChart() {
   Barchart.drawStackedBarChart("cpuChart", cpuDatasets, cpuLabels);
 }
 
-function drawCharts() {
-  toggleLoading(); // loading off
-
-  // Draw cpu chart
-  initializeBarChart();
-
-  // Draw gpu chart
+function buildDoughnutCharts() {
   let gpuData: any = {};
   gpuData = getDoughnutData();
   let index = 1;
@@ -251,8 +255,9 @@ function drawCharts() {
     }
     index++;
   }
+}
 
-  // Draw queued data table
+function buildTable() {
   let currentQueuedData: any = getCurrentQueueData();
   currentQueuedData.sort((a: PrometheusObject, b: PrometheusObject) =>
     a.metric.account > b.metric.account ? 1 : -1
@@ -263,8 +268,9 @@ function drawCharts() {
     ["Center", "Count"],
     "Current Queue Count"
   );
+}
 
-  // TODO: Swap with line chart
+function buildLineChart() {
   let queuedData = [{ label: "first dataset", data: [0, 20, 40, 50] }];
   LineChart.drawLineChart(
     "lineChart1",
@@ -272,6 +278,19 @@ function drawCharts() {
     ["January", "Feb", "March", "April"],
     "Slurm queued (pending) by Center"
   );
+}
+
+function drawCharts() {
+  toggleLoading(); // loading off
+
+  buildBarChart(); // Draw cpu chart
+  buildDoughnutCharts(); // Draw gpu charts
+  buildTable(); // Draw queued data table
+
+  // TODO: Swap with line chart
+  buildLineChart();
+
+  console.log("🌜", getWaitTime());
 
   // Set timer
   setLastMeasuredTime();

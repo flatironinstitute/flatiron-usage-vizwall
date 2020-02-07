@@ -2,6 +2,8 @@
 exports.__esModule = true;
 function drawTable(element, dataset, labels, title) {
     var ctx = document.getElementById(element);
+    ctx.innerHTML = "";
+    console.log("CLEARED EXISTING CONTEXT", ctx);
     var table = document.createElement("table");
     var thead = document.createElement("thead");
     var trHead = document.createElement("tr");
@@ -16,7 +18,6 @@ function drawTable(element, dataset, labels, title) {
         th.innerHTML = label;
         trHead.appendChild(th);
     });
-    console.log("🧶", dataset, dataset.length);
     function buildRow(row) {
         var tr = document.createElement("tr");
         var td1 = document.createElement("td");
@@ -42,7 +43,6 @@ function drawTable(element, dataset, labels, title) {
         _loop_1(row);
     }
     if (accounts.length) {
-        console.log("🦌 MISSING", accounts);
         for (var _a = 0, accounts_1 = accounts; _a < accounts_1.length; _a++) {
             var row = accounts_1[_a];
             var stub = {

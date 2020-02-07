@@ -84,6 +84,11 @@ var queries = [
         label: "Slurm queued pending job requests",
         name: "queued",
         query: 'sum(slurm_job_count{state="pending"}) by (account)'
+    },
+    {
+        label: "Total queue wait time",
+        name: "waitTime",
+        query: 'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)&start=1581019440&end=1581105840&step=30'
     }
 ];
 // Fetch data from Prometheus.
@@ -203,7 +208,10 @@ function getDoughnutData() {
 function getCurrentQueueData() {
     return dataMaster.filter(function (data) { return data.name.charAt(0) === "q"; })[0].data;
 }
-function initializeBarChart() {
+function getWaitTime() {
+    return dataMaster.filter(function (data) { return data.name.charAt(0) === "w"; })[0].data;
+}
+function buildBarChart() {
     // TODO: FIX THESE COLORS DOG
     var cpuDatasets = [
         {
@@ -259,11 +267,7 @@ function initializeBarChart() {
     ];
     Barchart.drawStackedBarChart("cpuChart", cpuDatasets, cpuLabels);
 }
-function drawCharts() {
-    toggleLoading(); // loading off
-    // Draw cpu chart
-    initializeBarChart();
-    // Draw gpu chart
+function buildDoughnutCharts() {
     var gpuData = {};
     gpuData = getDoughnutData();
     var index = 1;
@@ -273,15 +277,26 @@ function drawCharts() {
         }
         index++;
     }
-    // Draw queued data table
+}
+function buildTable() {
     var currentQueuedData = getCurrentQueueData();
     currentQueuedData.sort(function (a, b) {
         return a.metric.account > b.metric.account ? 1 : -1;
     });
     Table.drawTable("queueTable", currentQueuedData, ["Center", "Count"], "Current Queue Count");
-    // TODO: Swap with line chart
+}
+function buildLineChart() {
     var queuedData = [{ label: "first dataset", data: [0, 20, 40, 50] }];
     LineChart.drawLineChart("lineChart1", queuedData, ["January", "Feb", "March", "April"], "Slurm queued (pending) by Center");
+}
+function drawCharts() {
+    toggleLoading(); // loading off
+    buildBarChart(); // Draw cpu chart
+    buildDoughnutCharts(); // Draw gpu charts
+    buildTable(); // Draw queued data table
+    // TODO: Swap with line chart
+    buildLineChart();
+    console.log("🌜", getWaitTime());
     // Set timer
     setLastMeasuredTime();
 }

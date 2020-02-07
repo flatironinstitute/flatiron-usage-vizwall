@@ -26,17 +26,16 @@ npm run lint
 ### ToDo
 
 - Finish Queue Chart
-  - 3 Queries:
-    1. Current Queue Length - table
+  - 2 Queries:
+    1. Queue wait times @ 1min intervals by center
     2. Queue length @1 min intervals by center
-    3.
-  - Style current queue table
-  - Combine queries 2 & 3 into a time dot plot
+  - Combine queries 1 & 2 into a time dot plot
 - Stacked line graph of core hours by center over 7 days
 - _Tbd:_ Iron broadwell & skylight - CPU nodes currently allocated by account (or partition) aka center as a sunburst chart
 
 ### Misc todos
 
+- Style current queue table
 - Combine flexboxgrid & stylesheet and minify
 - Reorder barchart according to keys provided
 - Style and add cool fonts
