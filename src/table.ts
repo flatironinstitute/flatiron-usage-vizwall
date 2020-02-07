@@ -28,8 +28,6 @@ export function drawTable(
     trHead.appendChild(th);
   });
 
-  console.log("🧶", dataset, dataset.length);
-
   function buildRow(row: PrometheusObject) {
     let tr = document.createElement("tr");
     let td1 = document.createElement("td");
@@ -53,7 +51,6 @@ export function drawTable(
   }
 
   if (accounts.length) {
-    console.log("🦌 MISSING", accounts);
     for (let row of accounts) {
       let stub: PrometheusObject = {
         metric: { account: row },

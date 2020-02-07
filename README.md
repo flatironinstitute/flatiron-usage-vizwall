@@ -23,10 +23,17 @@ npm run lint
 - Stacked bar: CPUs free by location / total CPU nodes available
 - Doughnuts: GPUs free by location (rusty & popeye)
 
-### Charts to produce
+### ToDo
 
-- TBD: Currently queued jobs by location
-- TBD: Iron broadwell & skylight - CPU nodes currently allocated by account (or partition) aka center
+- Finish Queue Chart
+  - 3 Queries:
+    1. Current Queue Length - table
+    2. Queue length @1 min intervals by center
+    3.
+  - Style current queue table
+  - Combine queries 2 & 3 into a time dot plot
+- Stacked line graph of core hours by center over 7 days
+- _Tbd:_ Iron broadwell & skylight - CPU nodes currently allocated by account (or partition) aka center as a sunburst chart
 
 ### Misc todos
 
@@ -34,10 +41,9 @@ npm run lint
 - Reorder barchart according to keys provided
 - Style and add cool fonts
 - Improve labeling
+- Add open GPUs/CPUs as number under the donut
 
 ### Other charts for potential v2?
 
-- spikes in the week or another bit of timeseries data
-- avg wait time
 - CPU efficiency by center as racecars
-- Num queue items by center / location (toggle animated)
+- Toggle num queue items by center with queue items by location (gordon etc)
