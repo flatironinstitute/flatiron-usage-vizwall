@@ -84,23 +84,39 @@ var queries = [
         label: "Slurm queued pending job requests",
         name: "queued",
         query: 'sum(slurm_job_count{state="pending"}) by (account)'
-    },
+    }
+];
+var rangeQueries = [
     {
         label: "Total queue wait time",
         name: "waitTime",
-        query: 'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)&start=1581019440&end=1581105840&step=30'
+        query: 'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)',
+        amount: 1,
+        unit: "day",
+        step: "15s" //prometheus duration format
     }
 ];
 // Fetch data from Prometheus.
-function fetchData(queryObj) {
+function fetchData(queryObj, isRange) {
     return __awaiter(this, void 0, void 0, function () {
-        var base, url;
+        var base, url, end, start;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    base = "http://prometheus.flatironinstitute.org/api/v1/query?query=";
+                    base = isRange
+                        ? "http://prometheus.flatironinstitute.org/api/v1/query_range?query="
+                        : "http://prometheus.flatironinstitute.org/api/v1/query?query=";
                     url = base + encodeURI(queryObj.query);
-                    console.log("🖥️", url);
+                    if (isRange) {
+                        end = moment()
+                            .subtract(10, "minutes")
+                            .toISOString();
+                        start = moment()
+                            .subtract(queryObj.amount, queryObj.unit)
+                            .toISOString();
+                        url = url + encodeURI("&start=" + start + "&end=" + end + "&step=" + queryObj.step);
+                    }
+                    console.log("\u260E\uFE0F " + queryObj.name + ": " + url);
                     return [4 /*yield*/, fetch(url, {
                             headers: new Headers({
                                 Authorization: "Basic " + base64.encode("prom:etheus")
@@ -122,7 +138,7 @@ function fetchData(queryObj) {
 }
 function getDatasets() {
     return __awaiter(this, void 0, void 0, function () {
-        var fetchArr;
+        var fetchArr, fetchRangeArr;
         var _this = this;
         return __generator(this, function (_a) {
             fetchArr = queries.map(function (queryObj) { return __awaiter(_this, void 0, void 0, function () {
@@ -131,14 +147,27 @@ function getDatasets() {
                     switch (_b.label) {
                         case 0:
                             _a = {};
-                            return [4 /*yield*/, fetchData(queryObj)];
+                            return [4 /*yield*/, fetchData(queryObj, false)];
                         case 1: return [2 /*return*/, (_a.data = _b.sent(),
                                 _a.name = queryObj.name,
                                 _a)];
                     }
                 });
             }); });
-            return [2 /*return*/, Promise.all(fetchArr)];
+            fetchRangeArr = rangeQueries.map(function (rangeQueryObj) { return __awaiter(_this, void 0, void 0, function () {
+                var _a;
+                return __generator(this, function (_b) {
+                    switch (_b.label) {
+                        case 0:
+                            _a = {};
+                            return [4 /*yield*/, fetchData(rangeQueryObj, true)];
+                        case 1: return [2 /*return*/, (_a.data = _b.sent(),
+                                _a.name = rangeQueryObj.name,
+                                _a)];
+                    }
+                });
+            }); });
+            return [2 /*return*/, Promise.all(fetchArr.concat(fetchRangeArr))];
         });
     });
 }

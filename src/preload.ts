@@ -9,6 +9,9 @@ interface QueryObject {
   label: string;
   name: string;
   query: string;
+  amount?: any;
+  unit?: any;
+  step?: string;
 }
 
 interface PrometheusObject {
@@ -71,21 +74,42 @@ const queries = [
     label: "Slurm queued pending job requests",
     name: "queued",
     query: 'sum(slurm_job_count{state="pending"}) by (account)'
-  },
+  }
+];
+
+const rangeQueries = [
   {
     label: "Total queue wait time",
     name: "waitTime",
     query:
-      'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)&start=1581019440&end=1581105840&step=30'
+      'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)',
+    amount: 1,
+    unit: "day",
+    step: "15s" //prometheus duration format
   }
 ];
 
 // Fetch data from Prometheus.
-async function fetchData(queryObj: QueryObject) {
-  const base = "http://prometheus.flatironinstitute.org/api/v1/query?query=";
-  const url = base + encodeURI(queryObj.query);
+async function fetchData(queryObj: QueryObject, isRange: boolean) {
+  const base = isRange
+    ? "http://prometheus.flatironinstitute.org/api/v1/query_range?query="
+    : "http://prometheus.flatironinstitute.org/api/v1/query?query=";
 
-  console.log("🖥️", url);
+  let url = base + encodeURI(queryObj.query);
+
+  if (isRange) {
+    let end = moment()
+      .subtract(10, "minutes")
+      .toISOString();
+    let start = moment()
+      .subtract(queryObj.amount, queryObj.unit)
+      .toISOString();
+
+    url = url + encodeURI(`&start=${start}&end=${end}&step=${queryObj.step}`);
+  }
+
+  console.log(`☎️ ${queryObj.name}: ${url}`);
+
   return await fetch(url, {
     headers: new Headers({
       Authorization: `Basic ${base64.encode(`prom:etheus`)}`
@@ -105,11 +129,16 @@ async function fetchData(queryObj: QueryObject) {
 
 async function getDatasets() {
   const fetchArr = queries.map(async queryObj => ({
-    data: await fetchData(queryObj),
+    data: await fetchData(queryObj, false),
     name: queryObj.name
   }));
 
-  return Promise.all(fetchArr);
+  const fetchRangeArr = rangeQueries.map(async rangeQueryObj => ({
+    data: await fetchData(rangeQueryObj, true),
+    name: rangeQueryObj.name
+  }));
+
+  return Promise.all(fetchArr.concat(fetchRangeArr));
 }
 
 function sortCPUData(cpudata: PrometheusObject[]) {
