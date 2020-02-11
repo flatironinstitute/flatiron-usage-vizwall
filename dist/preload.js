@@ -88,12 +88,28 @@ var queries = [
 ];
 var rangeQueries = [
     {
-        label: "Total queue wait time",
+        label: "Rusty queue wait time over 24 hours",
         name: "waitTime",
         query: 'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)',
         amount: 1,
         unit: "day",
-        step: "15s" //prometheus duration format
+        step: "10m" //prometheus duration format
+    },
+    {
+        label: "Rusty queue length over 24 hours",
+        name: "lengthQueue",
+        query: 'sum(slurm_job_count{state="pending"}) by (account)',
+        amount: 1,
+        unit: "day",
+        step: "10m" //prometheus duration format
+    },
+    {
+        label: "Node counts by center for the last 7 Days",
+        name: "nodeCount",
+        query: 'sum(slurm_job_nodes{state="pending"}) by (account)',
+        amount: 7,
+        unit: "day",
+        step: "60m"
     }
 ];
 // Fetch data from Prometheus.
@@ -116,7 +132,7 @@ function fetchData(queryObj, isRange) {
                             .toISOString();
                         url = url + encodeURI("&start=" + start + "&end=" + end + "&step=" + queryObj.step);
                     }
-                    console.log("\u260E\uFE0F " + queryObj.name + ": " + url);
+                    console.log("Calling \u260E\uFE0F: " + queryObj.name + ": " + url);
                     return [4 /*yield*/, fetch(url, {
                             headers: new Headers({
                                 Authorization: "Basic " + base64.encode("prom:etheus")
@@ -241,6 +257,39 @@ function getCurrentQueueData() {
 function getWaitTime() {
     return dataMaster.filter(function (data) { return data.name.charAt(0) === "w"; })[0].data;
 }
+function getNodeCountData() {
+    // [
+    //   {
+    //     label: "first dataset",
+    //     data: [
+    //       {
+    //         x: 10,
+    //         y: 20
+    //       },
+    //       {
+    //         x: 15,
+    //         y: 10
+    //       }
+    //     ]
+    //   }
+    // ];
+    var nodeCount = dataMaster.find(function (data) { return data.name.charAt(0) === "n"; });
+    nodeCount.data.sort(function (a, b) {
+        return a.metric.account > b.metric.account ? 1 : -1;
+    });
+    var formatted = nodeCount.data.map(function (a) {
+        return {
+            label: a.metric.account,
+            data: a.values.map(function (val) {
+                return {
+                    x: val,
+                    y: val
+                };
+            })
+        };
+    });
+    console.table("formatted 🎾", formatted);
+}
 function buildBarChart() {
     // TODO: FIX THESE COLORS DOG
     var cpuDatasets = [
@@ -317,8 +366,12 @@ function buildTable() {
 }
 function buildLineChart() {
     var queuedData = [{ label: "first dataset", data: [0, 20, 40, 50] }];
+    getNodeCountData();
     LineChart.drawLineChart("lineChart1", queuedData, ["January", "Feb", "March", "April"], "Slurm queued (pending) by Center");
 }
+// function buildScatterplot() {
+//   Scatterplot.drawScatterplot("#scatterplot");
+// }
 function drawCharts() {
     toggleLoading(); // loading off
     buildBarChart(); // Draw cpu chart
@@ -326,7 +379,8 @@ function drawCharts() {
     buildTable(); // Draw queued data table
     // TODO: Swap with line chart
     buildLineChart();
-    console.log("🌜🗓️", dataMaster);
+    // buildScatterplot();
+    console.log("🧛‍♂️ datamaster", dataMaster);
     // Set timer
     setLastMeasuredTime();
 }

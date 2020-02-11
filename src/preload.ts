@@ -16,15 +16,14 @@ interface QueryObject {
 
 interface PrometheusObject {
   metric: any;
-  value: any;
+  value: [number, string];
+  values?: [number, string];
 }
 
-interface QueueObject {
+interface QueryResultObject {
   data: PrometheusObject[];
   name: string;
 }
-
-interface QueuedData extends Array<QueueObject> {}
 
 let dataMaster: any[] = [];
 let lastMeasuredTime: string;
@@ -79,13 +78,29 @@ const queries = [
 
 const rangeQueries = [
   {
-    label: "Total queue wait time",
+    label: "Rusty queue wait time over 24 hours",
     name: "waitTime",
     query:
       'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)',
     amount: 1,
     unit: "day",
-    step: "15s" //prometheus duration format
+    step: "10m" //prometheus duration format
+  },
+  {
+    label: "Rusty queue length over 24 hours",
+    name: "lengthQueue",
+    query: 'sum(slurm_job_count{state="pending"}) by (account)',
+    amount: 1,
+    unit: "day",
+    step: "10m" //prometheus duration format
+  },
+  {
+    label: "Node counts by center for the last 7 Days",
+    name: "nodeCount",
+    query: 'sum(slurm_job_nodes{state="pending"}) by (account)',
+    amount: 7,
+    unit: "day",
+    step: "60m"
   }
 ];
 
@@ -108,7 +123,7 @@ async function fetchData(queryObj: QueryObject, isRange: boolean) {
     url = url + encodeURI(`&start=${start}&end=${end}&step=${queryObj.step}`);
   }
 
-  console.log(`☎️ ${queryObj.name}: ${url}`);
+  console.log(`Calling ☎️: ${queryObj.name}: ${url}`);
 
   return await fetch(url, {
     headers: new Headers({
@@ -214,6 +229,45 @@ function getWaitTime() {
   return dataMaster.filter(data => data.name.charAt(0) === "w")[0].data;
 }
 
+function getNodeCountData() {
+  // [
+  //   {
+  //     label: "first dataset",
+  //     data: [
+  //       {
+  //         x: 10,
+  //         y: 20
+  //       },
+  //       {
+  //         x: 15,
+  //         y: 10
+  //       }
+  //     ]
+  //   }
+  // ];
+
+  const nodeCount: QueryResultObject = dataMaster.find(
+    data => data.name.charAt(0) === "n"
+  );
+
+  nodeCount.data.sort((a: PrometheusObject, b: PrometheusObject) =>
+    a.metric.account > b.metric.account ? 1 : -1
+  );
+  let formatted = nodeCount.data.map((a: PrometheusObject) => {
+    return {
+      label: a.metric.account,
+      data: a.values.map(val => {
+        return {
+          x: val,
+          y: val
+        };
+      })
+    };
+  });
+
+  console.table("formatted 🎾", formatted);
+}
+
 function buildBarChart() {
   // TODO: FIX THESE COLORS DOG
   const cpuDatasets = [
@@ -303,6 +357,7 @@ function buildTable() {
 
 function buildLineChart() {
   let queuedData = [{ label: "first dataset", data: [0, 20, 40, 50] }];
+  getNodeCountData();
   LineChart.drawLineChart(
     "lineChart1",
     queuedData,
@@ -310,6 +365,10 @@ function buildLineChart() {
     "Slurm queued (pending) by Center"
   );
 }
+
+// function buildScatterplot() {
+//   Scatterplot.drawScatterplot("#scatterplot");
+// }
 
 function drawCharts() {
   toggleLoading(); // loading off
@@ -321,7 +380,9 @@ function drawCharts() {
   // TODO: Swap with line chart
   buildLineChart();
 
-  console.log("🌜🗓️", dataMaster);
+  // buildScatterplot();
+
+  console.log("🧛‍♂️ datamaster", dataMaster);
 
   // Set timer
   setLastMeasuredTime();
