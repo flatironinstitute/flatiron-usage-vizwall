@@ -1,14 +1,13 @@
 "use strict";
 exports.__esModule = true;
 var chart_js_1 = require("chart.js");
-function drawLineChart(element, datasets, labels, title) {
+function drawLineChart(element, datasets, title) {
     var ctx = document.getElementById(element);
-    //   TODO: add min.max function
+    console.log("time test", datasets[0]);
     var lineChart = new chart_js_1.Chart(ctx, {
         type: "line",
         data: {
-            datasets: datasets,
-            labels: labels
+            datasets: datasets
         },
         options: {
             responsive: true,
@@ -17,11 +16,33 @@ function drawLineChart(element, datasets, labels, title) {
                 text: title
             },
             scales: {
+                xAxes: [
+                    {
+                        type: "time",
+                        time: {
+                            displayFormats: {
+                                quarter: "MMM YYYY"
+                            }
+                        },
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: "Date"
+                        },
+                        ticks: {
+                            major: {
+                                enabled: true
+                            },
+                            fontStyle: "bold"
+                        }
+                    }
+                ],
                 yAxes: [
                     {
-                        ticks: {
-                            suggestedMin: 50,
-                            suggestedMax: 100
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: "value"
                         }
                     }
                 ]

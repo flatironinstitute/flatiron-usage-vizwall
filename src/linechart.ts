@@ -1,18 +1,16 @@
 import { Chart } from "chart.js";
+import * as moment from "moment";
 
 export function drawLineChart(
   element: string,
   datasets: object[],
-  labels: string[],
   title: string
 ) {
   const ctx = document.getElementById(element) as HTMLCanvasElement;
-  //   TODO: add min.max function
   let lineChart = new Chart(ctx, {
     type: "line",
     data: {
-      datasets: datasets,
-      labels
+      datasets: datasets
     },
     options: {
       responsive: true,
@@ -21,11 +19,33 @@ export function drawLineChart(
         text: title
       },
       scales: {
+        xAxes: [
+          {
+            type: "time",
+            time: {
+              displayFormats: {
+                quarter: "MMM YYYY"
+              }
+            },
+            display: true,
+            scaleLabel: {
+              display: true,
+              labelString: "Date"
+            },
+            ticks: {
+              major: {
+                enabled: true
+              },
+              fontStyle: "bold"
+            }
+          }
+        ],
         yAxes: [
           {
-            ticks: {
-              suggestedMin: 50,
-              suggestedMax: 100
+            display: true,
+            scaleLabel: {
+              display: true,
+              labelString: "value"
             }
           }
         ]

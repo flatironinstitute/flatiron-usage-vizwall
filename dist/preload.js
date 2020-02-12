@@ -54,6 +54,18 @@ function setLastMeasuredTime() {
 function getNow() {
     return moment().format("MMMM Do YYYY, h:mm:ss a");
 }
+function getColor(center) {
+    var accountColors = {
+        cca: "rgb(191, 43, 36)",
+        ccb: "rgb(128, 172, 87)",
+        ccm: "rgb(242, 139, 0)",
+        ccq: "rgb(128, 93, 139)",
+        scc: "rgb(56, 75, 162)",
+        other: "rgb(128, 127, 132)",
+        popeye: "rgb(0, 131, 155)"
+    };
+    return accountColors[center];
+}
 var queries = [
     {
         label: "Free CPUs (non-GPU) by location",
@@ -109,7 +121,7 @@ var rangeQueries = [
         query: 'sum(slurm_job_nodes{state="pending"}) by (account)',
         amount: 7,
         unit: "day",
-        step: "60m"
+        step: "90m"
     }
 ];
 // Fetch data from Prometheus.
@@ -258,37 +270,27 @@ function getWaitTime() {
     return dataMaster.filter(function (data) { return data.name.charAt(0) === "w"; })[0].data;
 }
 function getNodeCountData() {
-    // [
-    //   {
-    //     label: "first dataset",
-    //     data: [
-    //       {
-    //         x: 10,
-    //         y: 20
-    //       },
-    //       {
-    //         x: 15,
-    //         y: 10
-    //       }
-    //     ]
-    //   }
-    // ];
     var nodeCount = dataMaster.find(function (data) { return data.name.charAt(0) === "n"; });
     nodeCount.data.sort(function (a, b) {
         return a.metric.account > b.metric.account ? 1 : -1;
     });
-    var formatted = nodeCount.data.map(function (a) {
+    return nodeCount.data.map(function (a) {
+        var dataMap = [];
+        a.values.forEach(function (val) {
+            var time = val[0], qty = val[1];
+            dataMap.push({ y: parseInt(qty), x: moment.unix(time) });
+            console.log(moment.unix(time));
+        });
+        var background = getColor(a.metric.account);
+        var border = background.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
         return {
             label: a.metric.account,
-            data: a.values.map(function (val) {
-                return {
-                    x: val,
-                    y: val
-                };
-            })
+            data: dataMap,
+            fill: false,
+            backgroundColor: background,
+            borderColor: border
         };
     });
-    console.table("formatted 🎾", formatted);
 }
 function buildBarChart() {
     // TODO: FIX THESE COLORS DOG
@@ -365,21 +367,15 @@ function buildTable() {
     Table.drawTable("queueTable", currentQueuedData, ["Center", "Count"], "Current Queue Count");
 }
 function buildLineChart() {
-    var queuedData = [{ label: "first dataset", data: [0, 20, 40, 50] }];
-    getNodeCountData();
-    LineChart.drawLineChart("lineChart1", queuedData, ["January", "Feb", "March", "April"], "Slurm queued (pending) by Center");
+    var nodecontent = getNodeCountData();
+    LineChart.drawLineChart("nodeChart", nodecontent, "Node counts by center for the last 7 Days");
 }
-// function buildScatterplot() {
-//   Scatterplot.drawScatterplot("#scatterplot");
-// }
 function drawCharts() {
     toggleLoading(); // loading off
     buildBarChart(); // Draw cpu chart
     buildDoughnutCharts(); // Draw gpu charts
     buildTable(); // Draw queued data table
-    // TODO: Swap with line chart
-    buildLineChart();
-    // buildScatterplot();
+    buildLineChart(); //Draw stacked streamograph
     console.log("🧛‍♂️ datamaster", dataMaster);
     // Set timer
     setLastMeasuredTime();

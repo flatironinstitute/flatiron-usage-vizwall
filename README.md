@@ -23,16 +23,17 @@ npm run lint
 - Stacked bar: CPUs free by location / total CPU nodes available
 - Doughnuts: GPUs free by location (rusty & popeye)
 - Table: Current queue length by center
+- Stacked line graph of nodes by center over 7 days
 
 ### ToDo
 
-- Stacked line graph of core hours by center over 7 days
 - Finish Queue Chart
   - Combine queries 1 & 2 into a time dot plot
 - _Tbd:_ Iron broadwell & skylight - CPU nodes currently allocated by account (or partition) aka center as a sunburst chart
 
 ### Misc todos
 
+- Fix time display on line graph of nodes
 - Style current queue table
 - Combine flexboxgrid & stylesheet and minify
 - Reorder barchart according to keys provided

@@ -15,6 +15,16 @@
   --blue: #268bd2;
   --cyan: #2aa198;
   --green: #859900;
+  /* FI Colors */
+  --fi-blue: #384ca2;
+  --fi-grey: #807f84;
+  --fi-teal: #00839b;
+  --fi-green: #4c9d2f;
+  --fi-yellow: #f6cf3f;
+  --fi-brown: #903f2c;
+  --fi-orange: #f28b00;
+  --fi-purple: #805d8b;
+  --fi-lilac: #b96ac9;
 }
 html,
 body {
