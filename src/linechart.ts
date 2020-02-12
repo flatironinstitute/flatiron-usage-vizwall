@@ -23,9 +23,7 @@ export function drawLineChart(
           {
             type: "time",
             time: {
-              displayFormats: {
-                quarter: "MMM YYYY"
-              }
+              unit: "day"
             },
             display: true,
             scaleLabel: {
@@ -43,6 +41,7 @@ export function drawLineChart(
         yAxes: [
           {
             display: true,
+            stacked: true,
             scaleLabel: {
               display: true,
               labelString: "value"

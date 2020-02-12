@@ -3,7 +3,6 @@ exports.__esModule = true;
 var chart_js_1 = require("chart.js");
 function drawLineChart(element, datasets, title) {
     var ctx = document.getElementById(element);
-    console.log("time test", datasets[0]);
     var lineChart = new chart_js_1.Chart(ctx, {
         type: "line",
         data: {
@@ -20,9 +19,7 @@ function drawLineChart(element, datasets, title) {
                     {
                         type: "time",
                         time: {
-                            displayFormats: {
-                                quarter: "MMM YYYY"
-                            }
+                            unit: "day"
                         },
                         display: true,
                         scaleLabel: {
@@ -40,6 +37,7 @@ function drawLineChart(element, datasets, title) {
                 yAxes: [
                     {
                         display: true,
+                        stacked: true,
                         scaleLabel: {
                             display: true,
                             labelString: "value"

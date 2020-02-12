@@ -144,7 +144,6 @@ function fetchData(queryObj, isRange) {
                             .toISOString();
                         url = url + encodeURI("&start=" + start + "&end=" + end + "&step=" + queryObj.step);
                     }
-                    console.log("Calling \u260E\uFE0F: " + queryObj.name + ": " + url);
                     return [4 /*yield*/, fetch(url, {
                             headers: new Headers({
                                 Authorization: "Basic " + base64.encode("prom:etheus")
@@ -279,7 +278,6 @@ function getNodeCountData() {
         a.values.forEach(function (val) {
             var time = val[0], qty = val[1];
             dataMap.push({ y: parseInt(qty), x: moment.unix(time) });
-            console.log(moment.unix(time));
         });
         var background = getColor(a.metric.account);
         var border = background.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
