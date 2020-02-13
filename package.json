@@ -7,7 +7,7 @@
     "build": "tsc",
     "watch": "tsc -w",
     "lint": "tslint -c tslint.json -p tsconfig.json --fix",
-    "start": "npm run build && electron ./dist/main.js"
+    "start": "npm run build && electron --no-sandbox ./dist/main.js"
   },
   "repository": "https://github.com/elovero/flatiron-usage-vizwall",
   "keywords": [

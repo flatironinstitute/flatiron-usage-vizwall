@@ -88,12 +88,12 @@ var queries = [
     {
         label: "GPUs free by location",
         name: "gpuFree",
-        query: 'sort(sum(slurm_node_gpus{state="free",nodes="gpu"}) by (cluster,nodes))'
+        query: 'sum(slurm_node_gpus{state="free",nodes="gpu"}) by (cluster)'
     },
     {
-        label: "Total GPUs by location",
-        name: "gpuTotal",
-        query: 'sum(slurm_node_gpus{nodes="gpu"}) by (cluster,nodes)'
+        label: "GPUs allocated by location",
+        name: "gpuAlloc",
+        query: 'sum(slurm_node_gpus{state="alloc",nodes="gpu"}) by (cluster)'
     },
     {
         label: "Slurm queued pending job requests",
@@ -207,6 +207,17 @@ function filterDataMaster(char) {
 function filterDataMasterWithoutPopeye(char) {
     return filterDataMaster(char)[0].data.filter(function (center) { return center.metric.account !== "popeye"; });
 }
+function dictBy(data, key, value) {
+    var map = {};
+    for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
+        var d = data_1[_i];
+        map[key(d)] = value(d);
+    }
+    return map;
+}
+function dictDataMaster() {
+    return dictBy(dataMaster, function (d) { return d.name; }, function (d) { return d.data; });
+}
 function sortCPUData(cpudata) {
     cpudata.sort(function (last, next) {
         if (last.metric.cluster === next.metric.cluster) {
@@ -233,42 +244,22 @@ function getBarChartData(name) {
     return filtered.map(function (obj) { return obj.value[1]; });
 }
 function getDoughnutData() {
-    var gpuData = filterDataMaster("g");
-    var alpha = gpuData.sort(function (a, b) {
-        return a.name > b.name ? 1 : -1;
-    });
+    var data = dictBy(filterDataMaster('g'), function (d) { return d.name; }, function (d) { return dictBy(d.data, function (d) { return d.metric.cluster; }, function (d) { return d.value[1]; }); });
     var dough = {};
     dough = {
         iron: {
             backgroundColor: ["rgba(153, 102, 255, 1)", "rgba(153, 102, 255, 0.2)"],
             borderColor: ["rgba(153, 102, 255, 1)", "rgba(153, 102, 255, 1)"],
-            data: [],
+            data: [data.gpuFree.iron, data.gpuAlloc.iron],
             label: "Iron"
         },
         popeye: {
             backgroundColor: ["rgba(255, 99, 132, 1)", "rgba(255, 99, 132, 0.2)"],
             borderColor: ["rgba(255, 99, 132, 1)", "rgba(255, 99, 132, 1)"],
-            data: [],
+            data: [data.gpuFree.popeye, data.gpuAlloc.popeye],
             label: "Popeye"
         }
     };
-    alpha.forEach(function (gpuQuery) {
-        gpuQuery.data.forEach(function (obj) {
-            if (obj.metric.cluster === "popeye") {
-                dough.popeye.data.push(obj.value[1]);
-            }
-            else {
-                dough.iron.data.push(obj.value[1]);
-            }
-        });
-    });
-    // Doughnut data array order: available, used, total
-    for (var value in dough) {
-        if (dough.hasOwnProperty(value)) {
-            var arr = dough[value].data;
-            arr.splice(1, 1, arr[1] - arr[0]);
-        }
-    }
     return dough;
 }
 function getCurrentQueueData() {
