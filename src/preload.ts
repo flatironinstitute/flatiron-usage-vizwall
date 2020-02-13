@@ -302,6 +302,8 @@ function getBubbleplotData() {
         backgroundColor: background,
         borderColor: border,
         borderWidth: 1,
+        hoverRadius: 1,
+        hitRadius: 1,
         data: datamap
       });
     } else {

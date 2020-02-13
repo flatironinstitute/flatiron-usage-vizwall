@@ -322,6 +322,8 @@ function getBubbleplotData() {
                 backgroundColor: background,
                 borderColor: border,
                 borderWidth: 1,
+                hoverRadius: 1,
+                hitRadius: 1,
                 data: datamap
             });
         }
@@ -433,7 +435,10 @@ function buildLineChart() {
 }
 function buildBubbleplot() {
     var bubbleContent = getBubbleplotData();
-    Bubbleplot.drawBubbleplot("bubbleplot", bubbleContent, "Wait time by center over last 24 hours.");
+    Bubbleplot.drawBubbleplot("bubbleplot", bubbleContent, [
+        "Wait time by center over last 24 hours",
+        "Point size reflects number of queue items"
+    ]);
 }
 function drawCharts() {
     toggleLoading(); // loading off

@@ -11,6 +11,7 @@ node_modules/
 
 # dotenv environment variables file
 .env
+variables.env
 
 # vscode files
 .vscode/
