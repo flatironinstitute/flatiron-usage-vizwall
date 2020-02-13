@@ -12,6 +12,8 @@
 exports.__esModule = true;
 var electron_1 = require("electron");
 var path = require("path");
+// import environmental variables from our variables.env file
+require("dotenv").config({ path: "variables.env" });
 var mainWindow;
 function createWindow() {
     // Create the browser window.

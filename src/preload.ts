@@ -3,7 +3,11 @@ import * as moment from "moment";
 import * as Barchart from "./barchart";
 import * as Doughnut from "./doughnut";
 import * as LineChart from "./linechart";
+import * as Bubbleplot from "./bubbleplot";
 import * as Table from "./table";
+
+const user = process.env.PROMETHEUS_USER;
+const pass = process.env.PROMETHEUS_PASS;
 
 interface QueryObject {
   label: string;
@@ -136,9 +140,10 @@ async function fetchData(queryObj: QueryObject, isRange: boolean) {
     url = url + encodeURI(`&start=${start}&end=${end}&step=${queryObj.step}`);
   }
 
+  console.log(`Fetching ${user}: ${pass}`);
   return await fetch(url, {
     headers: new Headers({
-      Authorization: `Basic ${base64.encode(`prom:etheus`)}`
+      Authorization: `Basic ${base64.encode(`${user}:${pass}`)}`
     })
   })
     .then(res => res.json())
@@ -236,7 +241,7 @@ function getCurrentQueueData() {
   return dataMaster.filter(data => data.name.charAt(0) === "q")[0].data;
 }
 
-function getWaitTime() {
+function getBubbleChartData() {
   return dataMaster.filter(data => data.name.charAt(0) === "w")[0].data;
 }
 
@@ -362,6 +367,18 @@ function buildLineChart() {
   );
 }
 
+function buildBubbleplot() {
+  let bubbleContent = getBubbleChartData();
+
+  console.log("🗯️", bubbleContent);
+
+  Bubbleplot.drawBubbleplot(
+    "bubbleplot",
+    [{}],
+    "Wait time by center over last 24 hours."
+  );
+}
+
 function drawCharts() {
   toggleLoading(); // loading off
 
@@ -369,6 +386,7 @@ function drawCharts() {
   buildDoughnutCharts(); // Draw gpu charts
   buildTable(); // Draw queued data table
   buildLineChart(); //Draw stacked streamograph
+  buildBubbleplot();
 
   console.log("🧛‍♂️ datamaster", dataMaster);
 

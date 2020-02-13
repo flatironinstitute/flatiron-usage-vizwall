@@ -41,7 +41,10 @@ var moment = require("moment");
 var Barchart = require("./barchart");
 var Doughnut = require("./doughnut");
 var LineChart = require("./linechart");
+var Bubbleplot = require("./bubbleplot");
 var Table = require("./table");
+var user = process.env.PROMETHEUS_USER;
+var pass = process.env.PROMETHEUS_PASS;
 var dataMaster = [];
 var lastMeasuredTime;
 function setLastMeasuredTime() {
@@ -144,9 +147,10 @@ function fetchData(queryObj, isRange) {
                             .toISOString();
                         url = url + encodeURI("&start=" + start + "&end=" + end + "&step=" + queryObj.step);
                     }
+                    console.log("Fetching " + user + ": " + pass);
                     return [4 /*yield*/, fetch(url, {
                             headers: new Headers({
-                                Authorization: "Basic " + base64.encode("prom:etheus")
+                                Authorization: "Basic " + base64.encode(user + ":" + pass)
                             })
                         })
                             .then(function (res) { return res.json(); })
@@ -265,7 +269,7 @@ function getDoughnutData() {
 function getCurrentQueueData() {
     return dataMaster.filter(function (data) { return data.name.charAt(0) === "q"; })[0].data;
 }
-function getWaitTime() {
+function getBubbleChartData() {
     return dataMaster.filter(function (data) { return data.name.charAt(0) === "w"; })[0].data;
 }
 function getNodeCountData() {
@@ -368,12 +372,18 @@ function buildLineChart() {
     var nodecontent = getNodeCountData();
     LineChart.drawLineChart("nodeChart", nodecontent, "Node counts by center for the last 7 Days");
 }
+function buildBubbleplot() {
+    var bubbleContent = getBubbleChartData();
+    console.log("🗯️", bubbleContent);
+    Bubbleplot.drawBubbleplot("bubbleplot", [{}], "Wait time by center over last 24 hours.");
+}
 function drawCharts() {
     toggleLoading(); // loading off
     buildBarChart(); // Draw cpu chart
     buildDoughnutCharts(); // Draw gpu charts
     buildTable(); // Draw queued data table
     buildLineChart(); //Draw stacked streamograph
+    buildBubbleplot();
     console.log("🧛‍♂️ datamaster", dataMaster);
     // Set timer
     setLastMeasuredTime();

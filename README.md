@@ -23,7 +23,7 @@ npm run lint
 - Stacked bar: CPUs free by location / total CPU nodes available
 - Doughnuts: GPUs free by location (rusty & popeye)
 - Table: Current queue length by center
-- Stacked line graph of nodes by center over 7 days
+- Line graph of nodes by center over 7 days
 
 ### ToDo
 
@@ -33,7 +33,6 @@ npm run lint
 
 ### Misc todos
 
-- Fix time display on line graph of nodes
 - Style current queue table
 - Combine flexboxgrid & stylesheet and minify
 - Reorder barchart according to keys provided

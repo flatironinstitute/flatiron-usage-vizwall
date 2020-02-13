@@ -12,6 +12,9 @@
 import { app, BrowserWindow } from "electron";
 import * as path from "path";
 
+// import environmental variables from our variables.env file
+require("dotenv").config({ path: "variables.env" });
+
 let mainWindow: Electron.BrowserWindow;
 
 function createWindow() {
