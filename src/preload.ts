@@ -84,7 +84,7 @@ const queries = [
   {
     label: "Total GPUs by location",
     name: "gpuTotal",
-    query: 'sum(slurm_node_cpus{nodes="gpu"}) by (cluster,nodes)'
+    query: 'sum(slurm_node_gpus{nodes="gpu"}) by (cluster,nodes)'
   },
   {
     label: "Slurm queued pending job requests",
@@ -408,7 +408,7 @@ function buildDoughnutCharts() {
       Doughnut.drawDoughnutChart(
         [gpuData[value]],
         `gpuChart${index}`,
-        ["In Use", "Free"],
+        ["Free", "In Use"],
         `${value.toString().toUpperCase()}`
       );
     }
@@ -473,6 +473,8 @@ function toggleLoading() {
 async function doTheThing() {
   toggleLoading(); // loading on
   dataMaster = await getDatasets();
+
+  console.log("🐉", dataMaster);
   drawCharts();
   await sleep(30000);
   doTheThing();

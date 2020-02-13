@@ -93,7 +93,7 @@ var queries = [
     {
         label: "Total GPUs by location",
         name: "gpuTotal",
-        query: 'sum(slurm_node_cpus{nodes="gpu"}) by (cluster,nodes)'
+        query: 'sum(slurm_node_gpus{nodes="gpu"}) by (cluster,nodes)'
     },
     {
         label: "Slurm queued pending job requests",
@@ -417,7 +417,7 @@ function buildDoughnutCharts() {
     var index = 1;
     for (var value in gpuData) {
         if (gpuData.hasOwnProperty(value)) {
-            Doughnut.drawDoughnutChart([gpuData[value]], "gpuChart" + index, ["In Use", "Free"], "" + value.toString().toUpperCase());
+            Doughnut.drawDoughnutChart([gpuData[value]], "gpuChart" + index, ["Free", "In Use"], "" + value.toString().toUpperCase());
         }
         index++;
     }
@@ -468,6 +468,7 @@ function doTheThing() {
                     return [4 /*yield*/, getDatasets()];
                 case 1:
                     dataMaster = _a.sent();
+                    console.log("🐉", dataMaster);
                     drawCharts();
                     return [4 /*yield*/, sleep(30000)];
                 case 2:
