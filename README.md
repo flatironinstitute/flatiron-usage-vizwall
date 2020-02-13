@@ -25,11 +25,10 @@ npm run lint
 - Table: Current queue length by center
 - Line graph of nodes by center over 7 days
 
-### ToDo
+### Charts To Do
 
-- Finish Queue Chart
-  - Combine queries 1 & 2 into a time dot plot
-- _Tbd:_ Iron broadwell & skylight - CPU nodes currently allocated by account (or partition) aka center as a sunburst chart
+- _Tbd:_ Iron broadwell & skylight
+- CPU nodes currently allocated by account (or partition) aka center as a sunburst chart
 
 ### Misc todos
 
@@ -39,6 +38,8 @@ npm run lint
 - Style and add cool fonts
 - Improve labeling
 - Add open GPUs/CPUs as number under the donut
+- Handle erroring on bubbleplot
+- Hover on bubbleplot
 
 ### Other charts for potential v2?
 

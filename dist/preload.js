@@ -108,7 +108,7 @@ var rangeQueries = [
         query: 'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)',
         amount: 1,
         unit: "day",
-        step: "10m" //prometheus duration format
+        step: "15m" //prometheus duration format
     },
     {
         label: "Rusty queue length over 24 hours",
@@ -116,7 +116,7 @@ var rangeQueries = [
         query: 'sum(slurm_job_count{state="pending"}) by (account)',
         amount: 1,
         unit: "day",
-        step: "10m" //prometheus duration format
+        step: "15m" //prometheus duration format
     },
     {
         label: "Node counts by center for the last 7 Days",
@@ -147,7 +147,6 @@ function fetchData(queryObj, isRange) {
                             .toISOString();
                         url = url + encodeURI("&start=" + start + "&end=" + end + "&step=" + queryObj.step);
                     }
-                    console.log("Fetching " + user + ": " + pass);
                     return [4 /*yield*/, fetch(url, {
                             headers: new Headers({
                                 Authorization: "Basic " + base64.encode(user + ":" + pass)
@@ -202,6 +201,12 @@ function getDatasets() {
         });
     });
 }
+function filterDataMaster(char) {
+    return dataMaster.filter(function (data) { return data.name.charAt(0) === char; });
+}
+function filterDataMasterWithoutPopeye(char) {
+    return filterDataMaster(char)[0].data.filter(function (center) { return center.metric.account !== "popeye"; });
+}
 function sortCPUData(cpudata) {
     cpudata.sort(function (last, next) {
         if (last.metric.cluster === next.metric.cluster) {
@@ -228,7 +233,7 @@ function getBarChartData(name) {
     return filtered.map(function (obj) { return obj.value[1]; });
 }
 function getDoughnutData() {
-    var gpuData = dataMaster.filter(function (data) { return data.name.charAt(0) === "g"; });
+    var gpuData = filterDataMaster("g");
     var alpha = gpuData.sort(function (a, b) {
         return a.name > b.name ? 1 : -1;
     });
@@ -267,10 +272,64 @@ function getDoughnutData() {
     return dough;
 }
 function getCurrentQueueData() {
-    return dataMaster.filter(function (data) { return data.name.charAt(0) === "q"; })[0].data;
+    var filtered = filterDataMaster("q");
+    return filtered[0].data;
 }
-function getBubbleChartData() {
-    return dataMaster.filter(function (data) { return data.name.charAt(0) === "w"; })[0].data;
+function combineBubbleData(waittimes, queuelengths) {
+    var combined = new Array();
+    if (waittimes.length !== queuelengths.length) {
+        // todo: invent a better error mechanism
+        console.error("length mismatch", waittimes, queuelengths);
+    }
+    var shorter = waittimes.length < queuelengths.length
+        ? waittimes.length
+        : queuelengths.length;
+    // loop
+    for (var i = 0; i < shorter; i++) {
+        var tstamp1 = waittimes[i][0];
+        var y = waittimes[i][1];
+        var tstamp2 = queuelengths[i][0];
+        var r = queuelengths[i][1];
+        // strip the decimal with Math.floor
+        // confirm they are the same values,
+        if (Math.floor(tstamp1) !== Math.floor(tstamp2)) {
+            // if not take the lower value and add a new entry with O for the other
+            // for now error out on the mismatch
+            // todo: invent a better error mechanism
+            console.error("mismatch", "⏰", waittimes[i], "📐", queuelengths[i]);
+        }
+        else {
+            combined.push({
+                x: moment.unix(tstamp1),
+                y: Math.floor(parseInt(y) / 60000),
+                r: r //queue length
+            });
+        }
+    }
+    return combined;
+}
+function getBubbleplotData() {
+    var waitTimes = filterDataMasterWithoutPopeye("w");
+    var queueLengths = filterDataMasterWithoutPopeye("l");
+    var combo = new Array();
+    for (var i = 0; i < waitTimes.length; i++) {
+        if (waitTimes[i].metric.account === queueLengths[i].metric.account) {
+            var datamap = combineBubbleData(waitTimes[i].values, queueLengths[i].values);
+            var border = getColor(waitTimes[i].metric.account);
+            var background = border.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
+            combo.push({
+                label: waitTimes[i].metric.account,
+                backgroundColor: background,
+                borderColor: border,
+                borderWidth: 1,
+                data: datamap
+            });
+        }
+        else {
+            console.error("Bubble data objects out of order", typeof waitTimes[i].metric.account, typeof queueLengths[i].metric.account);
+        }
+    }
+    return combo;
 }
 function getNodeCountData() {
     var nodeCount = dataMaster.find(function (data) { return data.name.charAt(0) === "n"; });
@@ -295,7 +354,7 @@ function getNodeCountData() {
     });
 }
 function buildBarChart() {
-    // TODO: FIX THESE COLORS DOG
+    // TODO: FIX THESE COLORS DAWG 👷‍♂️
     var cpuDatasets = [
         {
             backgroundColor: [
@@ -373,18 +432,16 @@ function buildLineChart() {
     LineChart.drawLineChart("nodeChart", nodecontent, "Node counts by center for the last 7 Days");
 }
 function buildBubbleplot() {
-    var bubbleContent = getBubbleChartData();
-    console.log("🗯️", bubbleContent);
-    Bubbleplot.drawBubbleplot("bubbleplot", [{}], "Wait time by center over last 24 hours.");
+    var bubbleContent = getBubbleplotData();
+    Bubbleplot.drawBubbleplot("bubbleplot", bubbleContent, "Wait time by center over last 24 hours.");
 }
 function drawCharts() {
     toggleLoading(); // loading off
     buildBarChart(); // Draw cpu chart
     buildDoughnutCharts(); // Draw gpu charts
     buildTable(); // Draw queued data table
-    buildLineChart(); //Draw stacked streamograph
-    buildBubbleplot();
-    console.log("🧛‍♂️ datamaster", dataMaster);
+    buildLineChart(); //Draw node count chart
+    buildBubbleplot(); //Draw queue bubbleplot
     // Set timer
     setLastMeasuredTime();
 }

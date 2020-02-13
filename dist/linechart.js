@@ -29,8 +29,7 @@ function drawLineChart(element, datasets, title) {
                         ticks: {
                             major: {
                                 enabled: true
-                            },
-                            fontStyle: "bold"
+                            }
                         }
                     }
                 ],

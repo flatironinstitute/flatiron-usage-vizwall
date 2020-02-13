@@ -101,7 +101,7 @@ const rangeQueries = [
       'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)',
     amount: 1,
     unit: "day",
-    step: "10m" //prometheus duration format
+    step: "15m" //prometheus duration format
   },
   {
     label: "Rusty queue length over 24 hours",
@@ -109,7 +109,7 @@ const rangeQueries = [
     query: 'sum(slurm_job_count{state="pending"}) by (account)',
     amount: 1,
     unit: "day",
-    step: "10m" //prometheus duration format
+    step: "15m" //prometheus duration format
   },
   {
     label: "Node counts by center for the last 7 Days",
@@ -140,7 +140,6 @@ async function fetchData(queryObj: QueryObject, isRange: boolean) {
     url = url + encodeURI(`&start=${start}&end=${end}&step=${queryObj.step}`);
   }
 
-  console.log(`Fetching ${user}: ${pass}`);
   return await fetch(url, {
     headers: new Headers({
       Authorization: `Basic ${base64.encode(`${user}:${pass}`)}`
@@ -172,6 +171,16 @@ async function getDatasets() {
   return Promise.all(fetchArr.concat(fetchRangeArr));
 }
 
+function filterDataMaster(char: string) {
+  return dataMaster.filter(data => data.name.charAt(0) === char);
+}
+
+function filterDataMasterWithoutPopeye(char: string) {
+  return filterDataMaster(char)[0].data.filter(
+    (center: PrometheusObject) => center.metric.account !== "popeye"
+  );
+}
+
 function sortCPUData(cpudata: PrometheusObject[]) {
   cpudata.sort((last, next) => {
     if (last.metric.cluster === next.metric.cluster) {
@@ -199,7 +208,7 @@ function getBarChartData(name: string) {
 }
 
 function getDoughnutData() {
-  const gpuData = dataMaster.filter(data => data.name.charAt(0) === "g");
+  const gpuData = filterDataMaster("g");
   const alpha = gpuData.sort((a: QueryObject, b: QueryObject) =>
     a.name > b.name ? 1 : -1
   );
@@ -238,11 +247,72 @@ function getDoughnutData() {
 }
 
 function getCurrentQueueData() {
-  return dataMaster.filter(data => data.name.charAt(0) === "q")[0].data;
+  let filtered = filterDataMaster("q");
+  return filtered[0].data;
 }
 
-function getBubbleChartData() {
-  return dataMaster.filter(data => data.name.charAt(0) === "w")[0].data;
+function combineBubbleData(waittimes: [any], queuelengths: [any]) {
+  var combined = new Array<Object>();
+  if (waittimes.length !== queuelengths.length) {
+    // todo: invent a better error mechanism
+    console.error("length mismatch", waittimes, queuelengths);
+  }
+  let shorter =
+    waittimes.length < queuelengths.length
+      ? waittimes.length
+      : queuelengths.length;
+  // loop
+  for (let i = 0; i < shorter; i++) {
+    let tstamp1: number = waittimes[i][0];
+    let y: string = waittimes[i][1];
+    let tstamp2: number = queuelengths[i][0];
+    let r: string = queuelengths[i][1];
+    // strip the decimal with Math.floor
+    // confirm they are the same values,
+    if (Math.floor(tstamp1) !== Math.floor(tstamp2)) {
+      // if not take the lower value and add a new entry with O for the other
+      // for now error out on the mismatch
+      // todo: invent a better error mechanism
+      console.error("mismatch", "⏰", waittimes[i], "📐", queuelengths[i]);
+    } else {
+      combined.push({
+        x: moment.unix(tstamp1), //timestamp
+        y: Math.floor(parseInt(y) / 60000), //waittime string
+        r: r //queue length
+      });
+    }
+  }
+  return combined;
+}
+
+function getBubbleplotData() {
+  let waitTimes = filterDataMasterWithoutPopeye("w");
+  let queueLengths = filterDataMasterWithoutPopeye("l");
+  var combo = new Array<Object>();
+  for (let i = 0; i < waitTimes.length; i++) {
+    if (waitTimes[i].metric.account === queueLengths[i].metric.account) {
+      let datamap = combineBubbleData(
+        waitTimes[i].values,
+        queueLengths[i].values
+      );
+      let border = getColor(waitTimes[i].metric.account);
+      let background = border.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
+      combo.push({
+        label: waitTimes[i].metric.account,
+        backgroundColor: background,
+        borderColor: border,
+        borderWidth: 1,
+        data: datamap
+      });
+    } else {
+      console.error(
+        "Bubble data objects out of order",
+        typeof waitTimes[i].metric.account,
+        typeof queueLengths[i].metric.account
+      );
+    }
+  }
+  return combo;
 }
 
 function getNodeCountData() {
@@ -271,7 +341,7 @@ function getNodeCountData() {
 }
 
 function buildBarChart() {
-  // TODO: FIX THESE COLORS DOG
+  // TODO: FIX THESE COLORS DAWG 👷‍♂️
   const cpuDatasets = [
     {
       backgroundColor: [
@@ -368,15 +438,12 @@ function buildLineChart() {
 }
 
 function buildBubbleplot() {
-  let bubbleContent = getBubbleChartData();
+  let bubbleContent = getBubbleplotData();
 
-  console.log("🗯️", bubbleContent);
-
-  Bubbleplot.drawBubbleplot(
-    "bubbleplot",
-    [{}],
-    "Wait time by center over last 24 hours."
-  );
+  Bubbleplot.drawBubbleplot("bubbleplot", bubbleContent, [
+    "Wait time by center over last 24 hours",
+    "Point size reflects number of queue items"
+  ]);
 }
 
 function drawCharts() {
@@ -385,10 +452,8 @@ function drawCharts() {
   buildBarChart(); // Draw cpu chart
   buildDoughnutCharts(); // Draw gpu charts
   buildTable(); // Draw queued data table
-  buildLineChart(); //Draw stacked streamograph
-  buildBubbleplot();
-
-  console.log("🧛‍♂️ datamaster", dataMaster);
+  buildLineChart(); //Draw node count chart
+  buildBubbleplot(); //Draw queue bubbleplot
 
   // Set timer
   setLastMeasuredTime();

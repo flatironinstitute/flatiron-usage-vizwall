@@ -2,7 +2,6 @@
 exports.__esModule = true;
 var chart_js_1 = require("chart.js");
 function drawBubbleplot(element, datasets, title) {
-    console.log(element, "inbubbleplot");
     var ctx = document.getElementById(element);
     var bubbleplot = new chart_js_1.Chart(ctx, {
         type: "bubble",
@@ -14,6 +13,36 @@ function drawBubbleplot(element, datasets, title) {
             title: {
                 display: true,
                 text: title
+            },
+            scales: {
+                xAxes: [
+                    {
+                        type: "time",
+                        time: {
+                            unit: "hour"
+                        },
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: "Time"
+                        },
+                        ticks: {
+                            major: {
+                                enabled: true
+                            }
+                        }
+                    }
+                ],
+                yAxes: [
+                    {
+                        display: true,
+                        stacked: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: "Wait in minutes"
+                        }
+                    }
+                ]
             }
         }
     });

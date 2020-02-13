@@ -1,5 +1,4 @@
 import { Chart } from "chart.js";
-import * as moment from "moment";
 
 export function drawLineChart(
   element: string,
@@ -33,8 +32,7 @@ export function drawLineChart(
             ticks: {
               major: {
                 enabled: true
-              },
-              fontStyle: "bold"
+              }
             }
           }
         ],
