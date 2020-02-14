@@ -116,7 +116,7 @@ const rangeQueries = [
     query: 'sum(slurm_job_nodes{state="pending"}) by (account)',
     amount: 7,
     unit: "day",
-    step: "90m"
+    step: "90m" //prometheus duration format
   }
 ];
 
@@ -261,14 +261,13 @@ function getCurrentQueueData() {
 function combineBubbleData(waittimes: [any], queuelengths: [any]) {
   var combined = new Array<Object>();
   if (waittimes.length !== queuelengths.length) {
-    // todo: invent a better error mechanism
+    // todo: better error mechanism
     console.error("length mismatch", waittimes, queuelengths);
   }
   let shorter =
     waittimes.length < queuelengths.length
       ? waittimes.length
       : queuelengths.length;
-  // loop the shorter array.
   for (let i = 0; i < shorter; i++) {
     let tstamp1: number = waittimes[i][0];
     let y: string = waittimes[i][1];
@@ -477,8 +476,7 @@ function toggleLoading() {
 async function doTheThing() {
   toggleLoading(); // loading on
   dataMaster = await getDatasets();
-
-  console.log("🐉", dataMaster);
+  console.log("❣️", dataMaster);
   drawCharts();
   await sleep(120000);
   doTheThing();
