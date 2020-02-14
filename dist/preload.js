@@ -244,7 +244,9 @@ function getBarChartData(name) {
     return filtered.map(function (obj) { return obj.value[1]; });
 }
 function getDoughnutData() {
-    var data = dictBy(filterDataMaster('g'), function (d) { return d.name; }, function (d) { return dictBy(d.data, function (d) { return d.metric.cluster; }, function (d) { return d.value[1]; }); });
+    var data = dictBy(filterDataMaster("g"), function (d) { return d.name; }, function (d) {
+        return dictBy(d.data, function (d) { return d.metric.cluster; }, function (d) { return d.value[1]; });
+    });
     var dough = {};
     dough = {
         iron: {

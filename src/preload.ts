@@ -180,15 +180,22 @@ function filterDataMasterWithoutPopeye(char: string) {
   );
 }
 
-function dictBy<T,V>(data: T[], key: (d: T) => string, value: (d: T) => V): { [key: string]: V } {
+function dictBy<T, V>(
+  data: T[],
+  key: (d: T) => string,
+  value: (d: T) => V
+): { [key: string]: V } {
   const map: { [name: string]: V } = {};
-  for (const d of data)
-    map[key(d)] = value(d);
+  for (const d of data) map[key(d)] = value(d);
   return map;
 }
 
 function dictDataMaster(): { [name: string]: any } {
-  return dictBy(dataMaster, d => d.name, d => d.data);
+  return dictBy(
+    dataMaster,
+    d => d.name,
+    d => d.data
+  );
 }
 
 function sortCPUData(cpudata: PrometheusObject[]) {
@@ -218,11 +225,16 @@ function getBarChartData(name: string) {
 }
 
 function getDoughnutData() {
-  const data = dictBy(filterDataMaster('g'),
+  const data = dictBy(
+    filterDataMaster("g"),
     d => d.name,
-    d => dictBy(d.data,
-      d => (<any>d).metric.cluster,
-      d => (<any>d).value[1]));
+    d =>
+      dictBy(
+        d.data,
+        d => (<any>d).metric.cluster,
+        d => (<any>d).value[1]
+      )
+  );
   let dough: any = {};
   dough = {
     iron: {
@@ -256,17 +268,14 @@ function combineBubbleData(waittimes: [any], queuelengths: [any]) {
     waittimes.length < queuelengths.length
       ? waittimes.length
       : queuelengths.length;
-  // loop
+  // loop the shorter array.
   for (let i = 0; i < shorter; i++) {
     let tstamp1: number = waittimes[i][0];
     let y: string = waittimes[i][1];
     let tstamp2: number = queuelengths[i][0];
     let r: string = queuelengths[i][1];
     // strip the decimal with Math.floor
-    // confirm they are the same values,
     if (Math.floor(tstamp1) !== Math.floor(tstamp2)) {
-      // if not take the lower value and add a new entry with O for the other
-      // for now error out on the mismatch
       // todo: invent a better error mechanism
       console.error("mismatch", "⏰", waittimes[i], "📐", queuelengths[i]);
     } else {
@@ -471,7 +480,7 @@ async function doTheThing() {
 
   console.log("🐉", dataMaster);
   drawCharts();
-  await sleep(30000);
+  await sleep(120000);
   doTheThing();
 }
 
