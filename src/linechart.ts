@@ -39,7 +39,7 @@ export function drawLineChart(
         yAxes: [
           {
             display: true,
-            stacked: true,
+            stacked: false,
             scaleLabel: {
               display: true,
               labelString: "value"

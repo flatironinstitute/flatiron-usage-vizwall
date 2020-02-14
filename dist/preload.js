@@ -122,7 +122,7 @@ var rangeQueries = [
     {
         label: "Node counts by center for the last 7 Days",
         name: "nodeCount",
-        query: 'sum(slurm_job_nodes{state="pending"}) by (account)',
+        query: 'sum(slurm_job_nodes{state="running"}) by (account)',
         amount: 7,
         unit: "day",
         step: "90m" //prometheus duration format
@@ -395,26 +395,33 @@ function buildTable() {
     Table.drawTable("queueTable", currentQueuedData, ["Center", "Count"], "Current Queue Count");
 }
 function buildLineChart() {
-    var nodeCount = dataMaster.find(function (data) { return data.name.charAt(0) === "n"; });
-    nodeCount.data.sort(function (a, b) {
+    var nodeCount = dataMasterDict.nodeCount;
+    nodeCount.sort(function (a, b) {
         return a.metric.account > b.metric.account ? 1 : -1;
     });
-    var nodecontent = nodeCount.data.map(function (a) {
+    var nodecontent = [];
+    var _loop_1 = function (a) {
+        var background = getColor(a.metric.account);
+        if (!background)
+            return "continue";
+        var border = background.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
         var dataMap = [];
         a.values.forEach(function (val) {
             var time = val[0], qty = val[1];
             dataMap.push({ y: parseInt(qty), x: moment.unix(time) });
         });
-        var background = getColor(a.metric.account);
-        var border = background.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
-        return {
+        nodecontent.push({
             label: a.metric.account,
             data: dataMap,
             fill: false,
             backgroundColor: background,
             borderColor: border
-        };
-    });
+        });
+    };
+    for (var _i = 0, nodeCount_1 = nodeCount; _i < nodeCount_1.length; _i++) {
+        var a = nodeCount_1[_i];
+        _loop_1(a);
+    }
     LineChart.drawLineChart("nodeChart", nodecontent, "Node counts by center for the last 7 Days");
 }
 function buildBubbleplot() {

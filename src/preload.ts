@@ -115,7 +115,7 @@ const rangeQueries = [
   {
     label: "Node counts by center for the last 7 Days",
     name: "nodeCount",
-    query: 'sum(slurm_job_nodes{state="pending"}) by (account)',
+    query: 'sum(slurm_job_nodes{state="running"}) by (account)',
     amount: 7,
     unit: "day",
     step: "90m" //prometheus duration format
@@ -417,28 +417,29 @@ function buildTable() {
 }
 
 function buildLineChart() {
-  const nodeCount: QueryResultObject = dataMaster.find(
-    data => data.name.charAt(0) === "n"
-  );
-  nodeCount.data.sort((a: PrometheusObject, b: PrometheusObject) =>
+  const nodeCount = dataMasterDict.nodeCount;
+  nodeCount.sort((a: PrometheusObject, b: PrometheusObject) =>
     a.metric.account > b.metric.account ? 1 : -1
   );
-  const nodecontent = nodeCount.data.map((a: PrometheusObject) => {
-    let dataMap: Array<any> = [];
+  const nodecontent = [];
+  for (const a of nodeCount) {
+    const background = getColor(a.metric.account);
+    if (!background)
+      continue;
+    const border = background.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
+    const dataMap: Array<any> = [];
     a.values.forEach(val => {
       let [time, qty] = val;
       dataMap.push({ y: parseInt(qty), x: moment.unix(time) });
     });
-    let background = getColor(a.metric.account);
-    let border = background.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
-    return {
+    nodecontent.push({
       label: a.metric.account,
       data: dataMap,
       fill: false,
       backgroundColor: background,
       borderColor: border
-    };
-  });
+    });
+  }
 
   LineChart.drawLineChart(
     "nodeChart",
