@@ -221,39 +221,47 @@ function sortCPUData(cpudata: PrometheusObject[]) {
 type BarChart = {
   label: string,
   cluster: string,
-  nodes: string
+  nodes: string,
+  color: string
 }
 
 const barCharts: BarChart[] = [
+  // TODO: FIX THESE COLORS DAWG 👷‍♂️
   {
     label: "Iron Broadwell",
     cluster: 'iron',
     nodes: 'broadwell',
+    color: '255,99,132',
   },
   {
     label: "Iron Skylake",
     cluster: 'iron',
-    nodes: 'skylake'
+    nodes: 'skylake',
+    color: '54,162,235',
   },
   {
     label: "Iron Infiniband",
     cluster: 'iron',
-    nodes: 'ib'
+    nodes: 'ib',
+    color: '255,206,86',
   },
   {
     label: "Iron BNL",
     cluster: 'iron',
-    nodes: 'bnl'
+    nodes: 'bnl',
+    color: '75,192,192',
   },
   {
     label: "Popeye Skylake",
     cluster: 'popeye',
-    nodes: 'skylake'
+    nodes: 'skylake',
+    color: '153,102,255',
   },
   {
     label: "Popeye Cascade Lake",
     cluster: 'popeye',
     nodes: 'cascadelake',
+    color: '255,159,64',
   },
 ];
 
@@ -265,7 +273,7 @@ function findBarChart(chartObj: PrometheusObject[], chart: BarChart): string|und
 }
 
 // Parse data for Chart
-function getBarChartData(chartObj: PrometheusObject[]) {
+function getBarChartData(chartObj: PrometheusObject[]): string[] {
   return barCharts.map(c => findBarChart(chartObj, c));
 }
 
@@ -287,11 +295,6 @@ function getDoughnutData() {
     }
   };
   return dough;
-}
-
-function getCurrentQueueData() {
-  let filtered = filterDataMaster("q");
-  return filtered[0].data;
 }
 
 function combineBubbleData(waittimes: [any], queuelengths: [any]) {
@@ -357,72 +360,18 @@ function getBubbleplotData() {
   return combo;
 }
 
-function getNodeCountData() {
-  const nodeCount: QueryResultObject = dataMaster.find(
-    data => data.name.charAt(0) === "n"
-  );
-  nodeCount.data.sort((a: PrometheusObject, b: PrometheusObject) =>
-    a.metric.account > b.metric.account ? 1 : -1
-  );
-  return nodeCount.data.map((a: PrometheusObject) => {
-    let dataMap: Array<any> = [];
-    a.values.forEach(val => {
-      let [time, qty] = val;
-      dataMap.push({ y: parseInt(qty), x: moment.unix(time) });
-    });
-    let background = getColor(a.metric.account);
-    let border = background.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
-    return {
-      label: a.metric.account,
-      data: dataMap,
-      fill: false,
-      backgroundColor: background,
-      borderColor: border
-    };
-  });
-}
-
 function buildBarChart() {
-  // TODO: FIX THESE COLORS DAWG 👷‍♂️
   const cpuDatasets = [
     {
-      backgroundColor: [
-        "rgba(255, 99, 132, 1)",
-        "rgba(54, 162, 235, 1)",
-        "rgba(255, 206, 86, 1)",
-        "rgba(75, 192, 192, 1)",
-        "rgba(153, 102, 255, 1)",
-        "rgba(255, 159, 64, 1)"
-      ],
-      borderColor: [
-        "rgba(255, 99, 132, 0.2)",
-        "rgba(54, 162, 235, 0.2)",
-        "rgba(255, 206, 86, 0.2)",
-        "rgba(75, 192, 192, 0.2)",
-        "rgba(153, 102, 255, 0.2)",
-        "rgba(255, 159, 64, 0.2)"
-      ],
+      backgroundColor: barCharts.map(c => `rgba(${c.color},1)`),
+      borderColor: barCharts.map(c => `rgba(${c.color},0.2)`),
       borderWidth: 1,
       data: getBarChartData(dataMasterDict.cpuFree),
       label: "Free CPUs (non-GPU) by location"
     },
     {
-      backgroundColor: [
-        "rgba(255, 99, 132, 0.2)",
-        "rgba(54, 162, 235, 0.2)",
-        "rgba(255, 206, 86, 0.2)",
-        "rgba(75, 192, 192, 0.2)",
-        "rgba(153, 102, 255, 0.2)",
-        "rgba(255, 159, 64, 0.2)"
-      ],
-      borderColor: [
-        "rgba(255, 99, 132, 1)",
-        "rgba(54, 162, 235, 1)",
-        "rgba(255, 206, 86, 1)",
-        "rgba(75, 192, 192, 1)",
-        "rgba(153, 102, 255, 1)",
-        "rgba(255, 159, 64, 1)"
-      ],
+      backgroundColor: barCharts.map(c => `rgba(${c.color},0.2)`),
+      borderColor: barCharts.map(c => `rgba(${c.color},1)`),
       borderWidth: 1,
       data: getBarChartData(dataMasterDict.cpuAlloc),
       label: "Allocated CPUs (non-GPU)"
@@ -449,7 +398,7 @@ function buildDoughnutCharts() {
 }
 
 function buildTable() {
-  let currentQueuedData: any = getCurrentQueueData();
+  const currentQueuedData = dataMasterDict.queued;
   currentQueuedData.sort((a: PrometheusObject, b: PrometheusObject) =>
     a.metric.account > b.metric.account ? 1 : -1
   );
@@ -462,7 +411,28 @@ function buildTable() {
 }
 
 function buildLineChart() {
-  let nodecontent = getNodeCountData();
+  const nodeCount: QueryResultObject = dataMaster.find(
+    data => data.name.charAt(0) === "n"
+  );
+  nodeCount.data.sort((a: PrometheusObject, b: PrometheusObject) =>
+    a.metric.account > b.metric.account ? 1 : -1
+  );
+  const nodecontent = nodeCount.data.map((a: PrometheusObject) => {
+    let dataMap: Array<any> = [];
+    a.values.forEach(val => {
+      let [time, qty] = val;
+      dataMap.push({ y: parseInt(qty), x: moment.unix(time) });
+    });
+    let background = getColor(a.metric.account);
+    let border = background.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
+    return {
+      label: a.metric.account,
+      data: dataMap,
+      fill: false,
+      backgroundColor: background,
+      borderColor: border
+    };
+  });
 
   LineChart.drawLineChart(
     "nodeChart",
