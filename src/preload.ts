@@ -488,7 +488,7 @@ async function doTheThing() {
     d => d.data
   );
 
-  console.table("❣️", dataMaster);
+  console.table(dataMaster);
   drawCharts();
   await sleep(120000);
   doTheThing();

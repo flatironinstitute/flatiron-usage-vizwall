@@ -125,7 +125,7 @@ var rangeQueries = [
         query: 'sum(slurm_job_nodes{state="pending"}) by (account)',
         amount: 7,
         unit: "day",
-        step: "90m"
+        step: "90m" //prometheus duration format
     }
 ];
 // Fetch data from Prometheus.
@@ -240,46 +240,43 @@ var barCharts = [
     // TODO: FIX THESE COLORS DAWG 👷‍♂️
     {
         label: "Iron Broadwell",
-        cluster: 'iron',
-        nodes: 'broadwell',
-        color: '255,99,132'
+        cluster: "iron",
+        nodes: "broadwell",
+        color: "255,99,132"
     },
     {
         label: "Iron Skylake",
-        cluster: 'iron',
-        nodes: 'skylake',
-        color: '54,162,235'
+        cluster: "iron",
+        nodes: "skylake",
+        color: "54,162,235"
     },
     {
         label: "Iron Infiniband",
-        cluster: 'iron',
-        nodes: 'ib',
-        color: '255,206,86'
+        cluster: "iron",
+        nodes: "ib",
+        color: "255,206,86"
     },
     {
         label: "Iron BNL",
-        cluster: 'iron',
-        nodes: 'bnl',
-        color: '75,192,192'
+        cluster: "iron",
+        nodes: "bnl",
+        color: "75,192,192"
     },
     {
         label: "Popeye Skylake",
-        cluster: 'popeye',
-        nodes: 'skylake',
-        color: '153,102,255'
+        cluster: "popeye",
+        nodes: "skylake",
+        color: "153,102,255"
     },
     {
         label: "Popeye Cascade Lake",
-        cluster: 'popeye',
-        nodes: 'cascadelake',
-        color: '255,159,64'
-    },
+        cluster: "popeye",
+        nodes: "cascadelake",
+        color: "255,159,64"
+    }
 ];
 function findBarChart(chartObj, chart) {
-    var o = chartObj.find(function (o) {
-        return o.metric.cluster == chart.cluster &&
-            o.metric.nodes == chart.nodes;
-    });
+    var o = chartObj.find(function (o) { return o.metric.cluster == chart.cluster && o.metric.nodes == chart.nodes; });
     if (o)
         return o.value[1];
 }
@@ -309,13 +306,12 @@ function getDoughnutData() {
 function combineBubbleData(waittimes, queuelengths) {
     var combined = new Array();
     if (waittimes.length !== queuelengths.length) {
-        // todo: invent a better error mechanism
+        // todo: better error mechanism
         console.error("length mismatch", waittimes, queuelengths);
     }
     var shorter = waittimes.length < queuelengths.length
         ? waittimes.length
         : queuelengths.length;
-    // loop the shorter array.
     for (var i = 0; i < shorter; i++) {
         var tstamp1 = waittimes[i][0];
         var y = waittimes[i][1];
@@ -457,7 +453,7 @@ function doTheThing() {
                 case 1:
                     dataMaster = _a.sent();
                     dataMasterDict = dictBy(dataMaster, function (d) { return d.name; }, function (d) { return d.data; });
-                    console.log("🐉", dataMasterDict);
+                    console.table(dataMaster);
                     drawCharts();
                     return [4 /*yield*/, sleep(120000)];
                 case 2:
