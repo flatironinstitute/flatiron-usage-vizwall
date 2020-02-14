@@ -36,7 +36,7 @@ function drawLineChart(element, datasets, title) {
                 yAxes: [
                     {
                         display: true,
-                        stacked: true,
+                        stacked: false,
                         scaleLabel: {
                             display: true,
                             labelString: "value"
