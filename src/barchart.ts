@@ -16,7 +16,7 @@ export function drawStackedBarChart(
         xAxes: [{ stacked: true }],
         yAxes: [
           {
-            stacked: false,
+            stacked: true,
             ticks: {
               beginAtZero: true,
             },
