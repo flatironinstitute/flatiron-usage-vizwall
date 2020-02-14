@@ -118,7 +118,7 @@ const rangeQueries = [
     query: 'sum(slurm_job_nodes{state="running"}) by (account)',
     amount: 7,
     unit: "day",
-    step: "90m"
+    step: "90m" //prometheus duration format
   }
 ];
 
@@ -184,8 +184,7 @@ function filterDataMasterWithoutPopeye(char: string) {
 
 function mapDict<T, V>(data: Dict<T>, f: (d: T) => V): Dict<V> {
   const r: Dict<V> = {};
-  for (const k in data)
-    r[k] = f(data[k]);
+  for (const k in data) r[k] = f(data[k]);
   return r;
 }
 
@@ -195,15 +194,16 @@ function dictBy<T, V>(
   value: (d: T) => V
 ): Dict<V> {
   const r: Dict<V> = {};
-  for (const d of data)
-    r[key(d)] = value(d);
+  for (const d of data) r[key(d)] = value(d);
   return r;
 }
 
 function valueByCluster(data: PrometheusObject[]): Dict<string> {
-  return dictBy(data, 
+  return dictBy(
+    data,
     d => d.metric.cluster,
-    d => d.value[1]);
+    d => d.value[1]
+  );
 }
 
 function sortCPUData(cpudata: PrometheusObject[]) {
@@ -219,56 +219,59 @@ function sortCPUData(cpudata: PrometheusObject[]) {
 }
 
 type BarChart = {
-  label: string,
-  cluster: string,
-  nodes: string,
-  color: string
-}
+  label: string;
+  cluster: string;
+  nodes: string;
+  color: string;
+};
 
 const barCharts: BarChart[] = [
   // TODO: FIX THESE COLORS DAWG 👷‍♂️
   {
     label: "Iron Broadwell",
-    cluster: 'iron',
-    nodes: 'broadwell',
-    color: '255,99,132',
+    cluster: "iron",
+    nodes: "broadwell",
+    color: "255,99,132"
   },
   {
     label: "Iron Skylake",
-    cluster: 'iron',
-    nodes: 'skylake',
-    color: '54,162,235',
+    cluster: "iron",
+    nodes: "skylake",
+    color: "54,162,235"
   },
   {
     label: "Iron Infiniband",
-    cluster: 'iron',
-    nodes: 'ib',
-    color: '255,206,86',
+    cluster: "iron",
+    nodes: "ib",
+    color: "255,206,86"
   },
   {
     label: "Iron BNL",
-    cluster: 'iron',
-    nodes: 'bnl',
-    color: '75,192,192',
+    cluster: "iron",
+    nodes: "bnl",
+    color: "75,192,192"
   },
   {
     label: "Popeye Skylake",
-    cluster: 'popeye',
-    nodes: 'skylake',
-    color: '153,102,255',
+    cluster: "popeye",
+    nodes: "skylake",
+    color: "153,102,255"
   },
   {
     label: "Popeye Cascade Lake",
-    cluster: 'popeye',
-    nodes: 'cascadelake',
-    color: '255,159,64',
-  },
+    cluster: "popeye",
+    nodes: "cascadelake",
+    color: "255,159,64"
+  }
 ];
 
-function findBarChart(chartObj: PrometheusObject[], chart: BarChart): string|undefined {
-  const o = chartObj.find(o =>
-    o.metric.cluster == chart.cluster &&
-    o.metric.nodes   == chart.nodes);
+function findBarChart(
+  chartObj: PrometheusObject[],
+  chart: BarChart
+): string | undefined {
+  const o = chartObj.find(
+    o => o.metric.cluster == chart.cluster && o.metric.nodes == chart.nodes
+  );
   if (o) return o.value[1];
 }
 
@@ -278,8 +281,8 @@ function getBarChartData(chartObj: PrometheusObject[]): string[] {
 }
 
 function getDoughnutData() {
-  const free = valueByCluster(dataMasterDict.gpuFree)
-  const alloc = valueByCluster(dataMasterDict.gpuAlloc)
+  const free = valueByCluster(dataMasterDict.gpuFree);
+  const alloc = valueByCluster(dataMasterDict.gpuAlloc);
   let dough: any = {
     iron: {
       backgroundColor: ["rgba(153, 102, 255, 1)", "rgba(153, 102, 255, 0.2)"],
@@ -300,14 +303,13 @@ function getDoughnutData() {
 function combineBubbleData(waittimes: [any], queuelengths: [any]) {
   var combined = new Array<Object>();
   if (waittimes.length !== queuelengths.length) {
-    // todo: invent a better error mechanism
+    // todo: better error mechanism
     console.error("length mismatch", waittimes, queuelengths);
   }
   let shorter =
     waittimes.length < queuelengths.length
       ? waittimes.length
       : queuelengths.length;
-  // loop the shorter array.
   for (let i = 0; i < shorter; i++) {
     let tstamp1: number = waittimes[i][0];
     let y: string = waittimes[i][1];
@@ -377,7 +379,11 @@ function buildBarChart() {
       label: "Allocated CPUs (non-GPU)"
     }
   ];
-  Barchart.drawStackedBarChart("cpuChart", cpuDatasets, barCharts.map(c => c.label));
+  Barchart.drawStackedBarChart(
+    "cpuChart",
+    cpuDatasets,
+    barCharts.map(c => c.label)
+  );
 }
 
 function buildDoughnutCharts() {
@@ -476,11 +482,14 @@ function toggleLoading() {
 async function doTheThing() {
   toggleLoading(); // loading on
   dataMaster = await getDatasets();
-  dataMasterDict = dictBy(dataMaster,
-    d => d.name,
-    d => d.data);
 
-  console.log("🐉", dataMasterDict);
+  dataMasterDict = dictBy(
+    dataMaster,
+    d => d.name,
+    d => d.data
+  );
+
+  console.table("❣️", dataMaster);
   drawCharts();
   await sleep(120000);
   doTheThing();
