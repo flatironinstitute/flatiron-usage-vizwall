@@ -9,6 +9,8 @@ import * as Table from "./table";
 const user = process.env.PROMETHEUS_USER;
 const pass = process.env.PROMETHEUS_PASS;
 
+type Dict<T> = { [name: string]: T };
+
 interface QueryObject {
   label: string;
   name: string;
@@ -29,7 +31,8 @@ interface QueryResultObject {
   name: string;
 }
 
-let dataMaster: any[] = [];
+let dataMaster: QueryResultObject[] = [];
+let dataMasterDict: Dict<PrometheusObject[]> = {};
 let lastMeasuredTime: string;
 
 function setLastMeasuredTime() {
@@ -61,19 +64,18 @@ const queries = [
   {
     label: "Free CPUs (non-GPU) by location",
     name: "cpuFree",
-    query:
-      'sort(sum(slurm_node_cpus{state="free",nodes!="gpu"}) by (cluster,nodes)) '
+    query: 'sum(slurm_node_cpus{state="free",nodes!="gpu"}) by (cluster,nodes)'
+  },
+  {
+    label: "Allocated CPUs (non-GPU) by location",
+    name: "cpuAlloc",
+    query: 'sum(slurm_node_cpus{state="alloc",nodes!="gpu"}) by (cluster,nodes)'
   },
   {
     label: "Percent Free CPUs (non-GPU) by location",
     name: "cpuPercentChart",
     query:
       'sum(slurm_node_cpus{state="free",nodes!="gpu"}) by (cluster,nodes) / sum(slurm_node_cpus{nodes!="gpu"}) by (cluster,nodes)'
-  },
-  {
-    label: "Total CPUs (non-GPU) by location",
-    name: "cpuTotal",
-    query: 'sum(slurm_node_cpus{nodes!="gpu"}) by (cluster,nodes)'
   },
   {
     label: "GPUs free by location",
@@ -180,22 +182,28 @@ function filterDataMasterWithoutPopeye(char: string) {
   );
 }
 
+function mapDict<T, V>(data: Dict<T>, f: (d: T) => V): Dict<V> {
+  const r: Dict<V> = {};
+  for (const k in data)
+    r[k] = f(data[k]);
+  return r;
+}
+
 function dictBy<T, V>(
   data: T[],
   key: (d: T) => string,
   value: (d: T) => V
-): { [key: string]: V } {
-  const map: { [name: string]: V } = {};
-  for (const d of data) map[key(d)] = value(d);
-  return map;
+): Dict<V> {
+  const r: Dict<V> = {};
+  for (const d of data)
+    r[key(d)] = value(d);
+  return r;
 }
 
-function dictDataMaster(): { [name: string]: any } {
-  return dictBy(
-    dataMaster,
-    d => d.name,
-    d => d.data
-  );
+function valueByCluster(data: PrometheusObject[]): Dict<string> {
+  return dictBy(data, 
+    d => d.metric.cluster,
+    d => d.value[1]);
 }
 
 function sortCPUData(cpudata: PrometheusObject[]) {
@@ -210,43 +218,71 @@ function sortCPUData(cpudata: PrometheusObject[]) {
   return cpudata.filter(obj => obj.metric.nodes !== "mem");
 }
 
+type BarChart = {
+  label: string,
+  cluster: string,
+  nodes: string
+}
+
+const barCharts: BarChart[] = [
+  {
+    label: "Iron Broadwell",
+    cluster: 'iron',
+    nodes: 'broadwell',
+  },
+  {
+    label: "Iron Skylake",
+    cluster: 'iron',
+    nodes: 'skylake'
+  },
+  {
+    label: "Iron Infiniband",
+    cluster: 'iron',
+    nodes: 'ib'
+  },
+  {
+    label: "Iron BNL",
+    cluster: 'iron',
+    nodes: 'bnl'
+  },
+  {
+    label: "Popeye Skylake",
+    cluster: 'popeye',
+    nodes: 'skylake'
+  },
+  {
+    label: "Popeye Cascade Lake",
+    cluster: 'popeye',
+    nodes: 'cascadelake',
+  },
+];
+
+function findBarChart(chartObj: PrometheusObject[], chart: BarChart): string|undefined {
+  const o = chartObj.find(o =>
+    o.metric.cluster == chart.cluster &&
+    o.metric.nodes   == chart.nodes);
+  if (o) return o.value[1];
+}
+
 // Parse data for Chart
-function getBarChartData(name: string) {
-  const chartObj = dataMaster.find(data => data.name === name).data;
-  let filtered;
-  if (name.charAt(0) === "c") {
-    filtered = sortCPUData(chartObj);
-  } else {
-    filtered = chartObj.sort((a: PrometheusObject, b: PrometheusObject) =>
-      a.metric.cluster > b.metric.cluster ? 1 : -1
-    );
-  }
-  return filtered.map((obj: PrometheusObject) => obj.value[1]);
+function getBarChartData(chartObj: PrometheusObject[]) {
+  return barCharts.map(c => findBarChart(chartObj, c));
 }
 
 function getDoughnutData() {
-  const data = dictBy(
-    filterDataMaster("g"),
-    d => d.name,
-    d =>
-      dictBy(
-        d.data,
-        d => (<any>d).metric.cluster,
-        d => (<any>d).value[1]
-      )
-  );
-  let dough: any = {};
-  dough = {
+  const free = valueByCluster(dataMasterDict.gpuFree)
+  const alloc = valueByCluster(dataMasterDict.gpuAlloc)
+  let dough: any = {
     iron: {
       backgroundColor: ["rgba(153, 102, 255, 1)", "rgba(153, 102, 255, 0.2)"],
       borderColor: ["rgba(153, 102, 255, 1)", "rgba(153, 102, 255, 1)"],
-      data: [data.gpuFree.iron, data.gpuAlloc.iron],
+      data: [free.iron, alloc.iron],
       label: "Iron"
     },
     popeye: {
       backgroundColor: ["rgba(255, 99, 132, 1)", "rgba(255, 99, 132, 0.2)"],
       borderColor: ["rgba(255, 99, 132, 1)", "rgba(255, 99, 132, 1)"],
-      data: [data.gpuFree.popeye, data.gpuAlloc.popeye],
+      data: [free.popeye, alloc.popeye],
       label: "Popeye"
     }
   };
@@ -367,7 +403,7 @@ function buildBarChart() {
         "rgba(255, 159, 64, 0.2)"
       ],
       borderWidth: 1,
-      data: getBarChartData("cpuFree"),
+      data: getBarChartData(dataMasterDict.cpuFree),
       label: "Free CPUs (non-GPU) by location"
     },
     {
@@ -388,19 +424,11 @@ function buildBarChart() {
         "rgba(255, 159, 64, 1)"
       ],
       borderWidth: 1,
-      data: getBarChartData("cpuTotal"),
-      label: "Total CPUs (non-GPU)"
+      data: getBarChartData(dataMasterDict.cpuAlloc),
+      label: "Allocated CPUs (non-GPU)"
     }
   ];
-  const cpuLabels = [
-    "Iron: BNL",
-    "Iron: Broadwell",
-    "Iron: Infinite Band",
-    "Iron: Skylake",
-    "Popeye: Cascade Lake",
-    "Popeye: Skylake"
-  ];
-  Barchart.drawStackedBarChart("cpuChart", cpuDatasets, cpuLabels);
+  Barchart.drawStackedBarChart("cpuChart", cpuDatasets, barCharts.map(c => c.label));
 }
 
 function buildDoughnutCharts() {
@@ -477,8 +505,11 @@ function toggleLoading() {
 async function doTheThing() {
   toggleLoading(); // loading on
   dataMaster = await getDatasets();
+  dataMasterDict = dictBy(dataMaster,
+    d => d.name,
+    d => d.data);
 
-  console.log("🐉", dataMaster);
+  console.log("🐉", dataMasterDict);
   drawCharts();
   await sleep(120000);
   doTheThing();

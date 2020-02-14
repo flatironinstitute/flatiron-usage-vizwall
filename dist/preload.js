@@ -46,6 +46,7 @@ var Table = require("./table");
 var user = process.env.PROMETHEUS_USER;
 var pass = process.env.PROMETHEUS_PASS;
 var dataMaster = [];
+var dataMasterDict = {};
 var lastMeasuredTime;
 function setLastMeasuredTime() {
     lastMeasuredTime = getNow();
@@ -73,17 +74,17 @@ var queries = [
     {
         label: "Free CPUs (non-GPU) by location",
         name: "cpuFree",
-        query: 'sort(sum(slurm_node_cpus{state="free",nodes!="gpu"}) by (cluster,nodes)) '
+        query: 'sum(slurm_node_cpus{state="free",nodes!="gpu"}) by (cluster,nodes)'
+    },
+    {
+        label: "Allocated CPUs (non-GPU) by location",
+        name: "cpuAlloc",
+        query: 'sum(slurm_node_cpus{state="alloc",nodes!="gpu"}) by (cluster,nodes)'
     },
     {
         label: "Percent Free CPUs (non-GPU) by location",
         name: "cpuPercentChart",
         query: 'sum(slurm_node_cpus{state="free",nodes!="gpu"}) by (cluster,nodes) / sum(slurm_node_cpus{nodes!="gpu"}) by (cluster,nodes)'
-    },
-    {
-        label: "Total CPUs (non-GPU) by location",
-        name: "cpuTotal",
-        query: 'sum(slurm_node_cpus{nodes!="gpu"}) by (cluster,nodes)'
     },
     {
         label: "GPUs free by location",
@@ -207,16 +208,22 @@ function filterDataMaster(char) {
 function filterDataMasterWithoutPopeye(char) {
     return filterDataMaster(char)[0].data.filter(function (center) { return center.metric.account !== "popeye"; });
 }
+function mapDict(data, f) {
+    var r = {};
+    for (var k in data)
+        r[k] = f(data[k]);
+    return r;
+}
 function dictBy(data, key, value) {
-    var map = {};
+    var r = {};
     for (var _i = 0, data_1 = data; _i < data_1.length; _i++) {
         var d = data_1[_i];
-        map[key(d)] = value(d);
+        r[key(d)] = value(d);
     }
-    return map;
+    return r;
 }
-function dictDataMaster() {
-    return dictBy(dataMaster, function (d) { return d.name; }, function (d) { return d.data; });
+function valueByCluster(data) {
+    return dictBy(data, function (d) { return d.metric.cluster; }, function (d) { return d.value[1]; });
 }
 function sortCPUData(cpudata) {
     cpudata.sort(function (last, next) {
@@ -229,36 +236,64 @@ function sortCPUData(cpudata) {
     // Remove mem from display.
     return cpudata.filter(function (obj) { return obj.metric.nodes !== "mem"; });
 }
+var barCharts = [
+    {
+        label: "Iron Broadwell",
+        cluster: 'iron',
+        nodes: 'broadwell'
+    },
+    {
+        label: "Iron Skylake",
+        cluster: 'iron',
+        nodes: 'skylake'
+    },
+    {
+        label: "Iron Infiniband",
+        cluster: 'iron',
+        nodes: 'ib'
+    },
+    {
+        label: "Iron BNL",
+        cluster: 'iron',
+        nodes: 'bnl'
+    },
+    {
+        label: "Popeye Skylake",
+        cluster: 'popeye',
+        nodes: 'skylake'
+    },
+    {
+        label: "Popeye Cascade Lake",
+        cluster: 'popeye',
+        nodes: 'cascadelake'
+    },
+];
+function findBarChart(chartObj, chart) {
+    var o = chartObj.find(function (o) {
+        return o.metric.cluster == chart.cluster &&
+            o.metric.nodes == chart.nodes;
+    });
+    if (o)
+        return o.value[1];
+}
 // Parse data for Chart
-function getBarChartData(name) {
-    var chartObj = dataMaster.find(function (data) { return data.name === name; }).data;
-    var filtered;
-    if (name.charAt(0) === "c") {
-        filtered = sortCPUData(chartObj);
-    }
-    else {
-        filtered = chartObj.sort(function (a, b) {
-            return a.metric.cluster > b.metric.cluster ? 1 : -1;
-        });
-    }
-    return filtered.map(function (obj) { return obj.value[1]; });
+function getBarChartData(chartObj) {
+    return barCharts.map(function (c) { return findBarChart(chartObj, c); });
 }
 function getDoughnutData() {
-    var data = dictBy(filterDataMaster("g"), function (d) { return d.name; }, function (d) {
-        return dictBy(d.data, function (d) { return d.metric.cluster; }, function (d) { return d.value[1]; });
-    });
-    var dough = {};
-    dough = {
+    var free = valueByCluster(dataMasterDict.gpuFree);
+    var alloc = valueByCluster(dataMasterDict.gpuAlloc);
+    var dough = {
         iron: {
             backgroundColor: ["rgba(153, 102, 255, 1)", "rgba(153, 102, 255, 0.2)"],
             borderColor: ["rgba(153, 102, 255, 1)", "rgba(153, 102, 255, 1)"],
-            data: [data.gpuFree.iron, data.gpuAlloc.iron],
+            data: [free.iron, alloc.iron],
             label: "Iron"
         },
         popeye: {
             backgroundColor: ["rgba(255, 99, 132, 1)", "rgba(255, 99, 132, 0.2)"],
             borderColor: ["rgba(255, 99, 132, 1)", "rgba(255, 99, 132, 1)"],
-            data: [data.gpuFree.popeye, data.gpuAlloc.popeye],
+            data: [free.popeye, alloc.popeye],
             label: "Popeye"
         }
     };
@@ -277,17 +312,14 @@ function combineBubbleData(waittimes, queuelengths) {
     var shorter = waittimes.length < queuelengths.length
         ? waittimes.length
         : queuelengths.length;
-    // loop
+    // loop the shorter array.
     for (var i = 0; i < shorter; i++) {
         var tstamp1 = waittimes[i][0];
         var y = waittimes[i][1];
         var tstamp2 = queuelengths[i][0];
         var r = queuelengths[i][1];
         // strip the decimal with Math.floor
-        // confirm they are the same values,
         if (Math.floor(tstamp1) !== Math.floor(tstamp2)) {
-            // if not take the lower value and add a new entry with O for the other
-            // for now error out on the mismatch
             // todo: invent a better error mechanism
             console.error("mismatch", "⏰", waittimes[i], "📐", queuelengths[i]);
         }
@@ -369,7 +401,7 @@ function buildBarChart() {
                 "rgba(255, 159, 64, 0.2)"
             ],
             borderWidth: 1,
-            data: getBarChartData("cpuFree"),
+            data: getBarChartData(dataMasterDict.cpuFree),
             label: "Free CPUs (non-GPU) by location"
         },
         {
@@ -390,19 +422,11 @@ function buildBarChart() {
                 "rgba(255, 159, 64, 1)"
             ],
             borderWidth: 1,
-            data: getBarChartData("cpuTotal"),
-            label: "Total CPUs (non-GPU)"
+            data: getBarChartData(dataMasterDict.cpuAlloc),
+            label: "Allocated CPUs (non-GPU)"
         }
     ];
-    var cpuLabels = [
-        "Iron: BNL",
-        "Iron: Broadwell",
-        "Iron: Infinite Band",
-        "Iron: Skylake",
-        "Popeye: Cascade Lake",
-        "Popeye: Skylake"
-    ];
-    Barchart.drawStackedBarChart("cpuChart", cpuDatasets, cpuLabels);
+    Barchart.drawStackedBarChart("cpuChart", cpuDatasets, barCharts.map(function (c) { return c.label; }));
 }
 function buildDoughnutCharts() {
     var gpuData = {};
@@ -461,9 +485,10 @@ function doTheThing() {
                     return [4 /*yield*/, getDatasets()];
                 case 1:
                     dataMaster = _a.sent();
-                    console.log("🐉", dataMaster);
+                    dataMasterDict = dictBy(dataMaster, function (d) { return d.name; }, function (d) { return d.data; });
+                    console.log("🐉", dataMasterDict);
                     drawCharts();
-                    return [4 /*yield*/, sleep(30000)];
+                    return [4 /*yield*/, sleep(120000)];
                 case 2:
                     _a.sent();
                     doTheThing();

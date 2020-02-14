@@ -13,7 +13,7 @@ function drawStackedBarChart(element, datasets, labels) {
                 xAxes: [{ stacked: true }],
                 yAxes: [
                     {
-                        stacked: false,
+                        stacked: true,
                         ticks: {
                             beginAtZero: true
                         }
