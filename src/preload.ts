@@ -342,7 +342,6 @@ function getBubbleplotData() {
         queueLengths[i].values
       );
       let border = getColor(waitTimes[i].metric.account);
-      console.log("🍼", border, waitTimes[i]);
       let background = border.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
       combo.push({
         label: waitTimes[i].metric.account,
