@@ -66,6 +66,7 @@ function getColor(center) {
         ccq: "rgb(128, 93, 139)",
         scc: "rgb(56, 75, 162)",
         other: "rgb(128, 127, 132)",
+        info: "rgb(128, 127, 132)",
         popeye: "rgb(0, 131, 155)"
     };
     return accountColors[center];
@@ -237,7 +238,7 @@ function sortCPUData(cpudata) {
     return cpudata.filter(function (obj) { return obj.metric.nodes !== "mem"; });
 }
 var barCharts = [
-    // TODO: FIX THESE COLORS DAWG 👷‍♂️
+    // TODO: FIX THESE COLORS DAWG 🐶
     {
         label: "Iron Broadwell",
         cluster: "iron",
@@ -340,6 +341,7 @@ function getBubbleplotData() {
         if (waitTimes[i].metric.account === queueLengths[i].metric.account) {
             var datamap = combineBubbleData(waitTimes[i].values, queueLengths[i].values);
             var border = getColor(waitTimes[i].metric.account);
+            console.log("🍼", border, waitTimes[i]);
             var background = border.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
             combo.push({
                 label: waitTimes[i].metric.account,

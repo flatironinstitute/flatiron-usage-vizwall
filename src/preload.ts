@@ -55,6 +55,7 @@ function getColor(center: string) {
     ccq: "rgb(128, 93, 139)",
     scc: "rgb(56, 75, 162)",
     other: "rgb(128, 127, 132)",
+    info: "rgb(128, 127, 132)",
     popeye: "rgb(0, 131, 155)"
   };
   return accountColors[center];
@@ -226,7 +227,7 @@ type BarChart = {
 };
 
 const barCharts: BarChart[] = [
-  // TODO: FIX THESE COLORS DAWG 👷‍♂️
+  // TODO: FIX THESE COLORS DAWG 🐶
   {
     label: "Iron Broadwell",
     cluster: "iron",
@@ -341,6 +342,7 @@ function getBubbleplotData() {
         queueLengths[i].values
       );
       let border = getColor(waitTimes[i].metric.account);
+      console.log("🍼", border, waitTimes[i]);
       let background = border.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
       combo.push({
         label: waitTimes[i].metric.account,
@@ -424,8 +426,7 @@ function buildLineChart() {
   const nodecontent = [];
   for (const a of nodeCount) {
     const background = getColor(a.metric.account);
-    if (!background)
-      continue;
+    if (!background) continue;
     const border = background.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
     const dataMap: Array<any> = [];
     a.values.forEach(val => {

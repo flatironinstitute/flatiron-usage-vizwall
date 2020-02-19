@@ -1,3 +1,7 @@
+@font-face {
+  font-family: "vcr";
+  src: url("webfont.ttf") format("truetype");
+}
 :root {
   --base03: #002b36;
   --base02: #073642;
@@ -55,8 +59,9 @@ h6 {
   flex-direction: column;
 }
 .heading {
-  font-family: "Poller One", cursive;
-  font-style: italic;
+  /* font-family: "Poller One", cursive; */
+  /* font-style: italic; */
+  font-family: "vcr", monospace;
   font-weight: 700;
 }
 .alert {

@@ -17,7 +17,7 @@ function drawStackedBarChart(element, datasets, labels) {
                         ticks: {
                             beginAtZero: true
                         }
-                    },
+                    }
                 ]
             }
         },
