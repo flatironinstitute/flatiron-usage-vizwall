@@ -48,6 +48,7 @@ var pass = process.env.PROMETHEUS_PASS;
 var dataMaster = [];
 var dataMasterDict = {};
 var lastMeasuredTime;
+var chartHeight;
 function setLastMeasuredTime() {
     lastMeasuredTime = getNow();
     var element = document.getElementById("lastMeasuredTime");
@@ -64,9 +65,9 @@ function getColor(center) {
         ccb: "rgb(128, 172, 87)",
         ccm: "rgb(242, 139, 0)",
         ccq: "rgb(128, 93, 139)",
-        scc: "rgb(56, 75, 162)",
+        scc: "rgb(246, 194, 68)",
         other: "rgb(128, 127, 132)",
-        info: "rgb(128, 127, 132)",
+        info: "rgb(65, 83, 175)",
         popeye: "rgb(0, 131, 155)"
     };
     return accountColors[center];
@@ -128,6 +129,109 @@ var rangeQueries = [
         unit: "day",
         step: "90m" //prometheus duration format
     }
+];
+var backgroundIndex = 0;
+var backgroundColors = [
+    "#858585",
+    "#3d4dff",
+    "#ffffff",
+    "#f5f5dc",
+    "#3f8fd4",
+    "#8c8599",
+    "#00d5fa",
+    "#ffb32f",
+    "#4138a1",
+    "#ffffff",
+    "#6e719e",
+    "#ababab",
+    "#ed8917",
+    "#787878",
+    "#0ccc1c",
+    "#87ff5c",
+    "#ffffff",
+    "#440be0",
+    "#575757",
+    "#e0d8c7",
+    "#78FA8C",
+    "#FFEE52",
+    "#7d7d7d",
+    "#ff0000",
+    "#006400",
+    "#ff7d7d",
+    "#00ff09",
+    "#c9c3c3",
+    "#d9e9f7",
+    "#f0c539",
+    "#0000fb",
+    "#fa002e",
+    "#006cfa",
+    "#ff7bff",
+    "#ff4b0a",
+    "#ffcc99",
+    "#fe984d",
+    "#4c914e",
+    "#bec7a2",
+    "#ffc108",
+    "#cc9966",
+    "#0031ff",
+    "#ebcece",
+    "#4ea8fc",
+    "#990f46",
+    "#d8cda3",
+    "#cddede",
+    "#67caeb",
+    "#e85858",
+    "#d3d4e0",
+    "#e00025",
+    "#f405fc",
+    "#f5b505",
+    "#acacac",
+    "#6791d3",
+    "#455de6",
+    "#6ae8c0",
+    "#d1d143",
+    "#ffc5b2",
+    "#5f96a1",
+    "#4955fc",
+    "#e3ff8f",
+    "#482e84",
+    "#6b7367",
+    "#ffff00",
+    "#9bbac2",
+    "#E7C0ED",
+    "#bdd5e6",
+    "#bfbfbf",
+    "#feffb2",
+    "#c9e1f5",
+    "#71C5E8",
+    "#52a1eb",
+    "#fcfcfc",
+    "#707682",
+    "#f08660",
+    "#ceff0a",
+    "#43d61a",
+    "rgba(255, 239, 97, 1.00)",
+    "#FF33FF",
+    "#fa697a",
+    "#ff99c9",
+    "#e2ecf0",
+    "#A1C1F4",
+    "rgba(252, 0, 244, 1.00)",
+    "#9e9e9e",
+    "#9fb899",
+    "#f2b530",
+    "#d102c7",
+    "#f26508",
+    "#e9f0a1",
+    "#3b5998",
+    "#e615c3",
+    "#11ff00",
+    "#e0ed23",
+    "#fff242",
+    "#9965e6",
+    "#ffce64",
+    "rgba(237, 187, 7, 1.00)",
+    "#ff0000"
 ];
 // Fetch data from Prometheus.
 function fetchData(queryObj, isRange) {
@@ -341,7 +445,6 @@ function getBubbleplotData() {
         if (waitTimes[i].metric.account === queueLengths[i].metric.account) {
             var datamap = combineBubbleData(waitTimes[i].values, queueLengths[i].values);
             var border = getColor(waitTimes[i].metric.account);
-            console.log("🍼", border, waitTimes[i]);
             var background = border.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
             combo.push({
                 label: waitTimes[i].metric.account,
@@ -424,7 +527,7 @@ function buildLineChart() {
         var a = nodeCount_1[_i];
         _loop_1(a);
     }
-    LineChart.drawLineChart("nodeChart", nodecontent, "Node counts by center for the last 7 Days");
+    LineChart.drawLineChart("nodeChart", nodecontent, "Node counts by center for the last 7 Days", chartHeight);
 }
 function buildBubbleplot() {
     var bubbleContent = getBubbleplotData();
@@ -452,12 +555,19 @@ function toggleLoading() {
         loading.style.display = "none";
     }
 }
+function swapBackgroundColor() {
+    document.body.style.backgroundColor = backgroundColors[backgroundIndex];
+    backgroundIndex++;
+}
 function doTheThing() {
     return __awaiter(this, void 0, void 0, function () {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     toggleLoading(); // loading on
+                    swapBackgroundColor();
+                    // get master page height for chart sizing
+                    chartHeight = (document.documentElement.clientHeight - 120) / 3;
                     return [4 /*yield*/, getDatasets()];
                 case 1:
                     dataMaster = _a.sent();

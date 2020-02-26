@@ -9,6 +9,7 @@ function drawDoughnutChart(datasets, element, labels, title) {
             labels: labels
         },
         options: {
+            responsive: true,
             animation: {
                 animateRotate: true,
                 animateScale: true
@@ -17,7 +18,6 @@ function drawDoughnutChart(datasets, element, labels, title) {
             legend: {
                 position: "top"
             },
-            responsive: true,
             rotation: Math.PI,
             title: {
                 display: true,

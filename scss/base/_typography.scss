@@ -1,0 +1,29 @@
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: $secondary-font-face;
+  font-size: $header-size;
+  font-weight: bold;
+  line-height: $header-line-height;
+  color: $altbase1;
+}
+
+p.caption {
+  font-size: $caption-size;
+  font-family: $secondary-font-face;
+  font-weight: normal;
+  line-height: $caption-line-height;
+  color: $altbase1;
+}
+
+.heading {
+  font-family: "vcr", $monotype;
+  font-weight: 700;
+}
+
+.alert {
+  color: $altbase1;
+}

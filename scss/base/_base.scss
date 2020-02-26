@@ -1,0 +1,20 @@
+/* Base
+––––––––––––––––––––––––––––––––––––––––––––––––––
+html is set to 62.5% so that all the REM measurements throughout are based on 10px sizing.
+So basically 1.5rem = 15px :)
+*/
+
+html {
+  font-size: 62.5%;
+}
+
+html,
+body {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-size: $body-size;
+  font-family: $primary-font-face;
+  font-weight: normal;
+  line-height: $body-line-height;
+}

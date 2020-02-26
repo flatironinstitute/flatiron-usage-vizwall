@@ -4,51 +4,52 @@
     <meta charset="UTF-8" />
     <title>SLURM WATCH: Flatiron Slurm Data Usage</title>
     <link
-      href="https://fonts.googleapis.com/css?family=Poller+One&display=swap"
+      href="https://fonts.googleapis.com/css?family=IBM+Plex+Mono:400,400i|IBM+Plex+Sans+Condensed:400,400i|IBM+Plex+Sans:100,100i,400,400i,700,700i|IBM+Plex+Serif:400,400i&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./styles.css" />
-    <link rel="stylesheet" href="./flexboxgrid.css" />
+    <link rel="stylesheet" href="./style.css" />
   </head>
-  <body class="body">
-    <header class="container-fluid">
-      <div class="row bottom-xs between-xs">
-        <h1 class="heading">⚡ SLURM WATCH ⚡</h1>
-        <h4 id="loading" class="alert">Loading</h4>
-        <h4 id="lastMeasuredTime" class="alert"></h4>
-      </div>
-    </header>
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-xs-6">
-          <div class="chart-container">
-            <canvas id="cpuChart"></canvas>
-          </div>
-        </div>
-        <div class="col-xs-6 row">
-          <div class="chart-container row middle-xs">
-            <div class="col-xs-6"><canvas id="gpuChart1"></canvas></div>
-            <div class="col-xs-6"><canvas id="gpuChart2"></canvas></div>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-xs-10">
-          <div class="chart-container">
-            <canvas id="nodeChart"></canvas>
-          </div>
-        </div>
-        <div class="col-xs-2 row">
-          <div class="chart-container">
-            <p>Current Queue Length</p>
-            <div id="queueTable"></div>
-          </div>
-        </div>
-      </div>
+  <body id="bawdy" class="body">
+    <div class="container-fluid main-container">
       <div class="row">
         <div class="col-xs-12">
           <div class="chart-container">
             <canvas id="bubbleplot"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="row start-xs between-xs top-xs">
+        <div class="col-xs-5">
+          <div class="chart-container">
+            <canvas id="cpuChart"></canvas>
+          </div>
+        </div>
+        <div class="col-xs-2 vert-column">
+          <h1 class="heading">SLURM WATCH 🌩️</h1>
+          <p id="loading" class="caption">Loading</p>
+          <p id="lastMeasuredTime" class="caption"></p>
+        </div>
+        <div class="col-xs-5 row">
+          <div class="row middle-xs chart-container-group">
+            <div class="col-xs-6 chart-container-sm">
+              <canvas id="gpuChart1"></canvas>
+            </div>
+            <div class="col-xs-6 chart-container-sm">
+              <canvas id="gpuChart2"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xs-6">
+          <div class="chart-container">
+            <canvas id="nodeChart"></canvas>
+          </div>
+        </div>
+        <div class="col-xs-6 row">
+          <div class="chart-container">
+            <p>Current Queue Length</p>
+            <div id="queueTable"></div>
           </div>
         </div>
       </div>

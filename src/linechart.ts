@@ -3,9 +3,12 @@ import { Chart } from "chart.js";
 export function drawLineChart(
   element: string,
   datasets: object[],
-  title: string
+  title: string,
+  chartHeight: number
 ) {
   const ctx = document.getElementById(element) as HTMLCanvasElement;
+  // ctx.height = chartHeight;
+  // console.log("🚀", ctx, chartHeight);
   let lineChart = new Chart(ctx, {
     type: "line",
     data: {

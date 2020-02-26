@@ -20,10 +20,11 @@ let mainWindow: Electron.BrowserWindow;
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    backgroundColor: "#002b36",
+    // backgroundColor: "#002b36",
+    // transparent: false,
+    transparent: true,
     frame: false,
     fullscreen: true,
-    transparent: false,
     webPreferences: {
       preload: path.join(__dirname, "preload.js")
     }

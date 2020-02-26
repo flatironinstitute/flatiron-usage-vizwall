@@ -13,6 +13,7 @@ export function drawDoughnutChart(
       labels
     },
     options: {
+      responsive: true,
       animation: {
         animateRotate: true,
         animateScale: true
@@ -21,7 +22,6 @@ export function drawDoughnutChart(
       legend: {
         position: "top"
       },
-      responsive: true,
       rotation: Math.PI,
       title: {
         display: true,
