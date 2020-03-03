@@ -6,18 +6,16 @@
   font-weight: normal;
   font-style: normal;
 }
-$base03: #002b36;
-$base02: #073642;
-$base01: #586e75;
-$base00: #657b83;
-$base0: #839496;
-$base1: #93a1a1;
-$base2: #eee8d5;
-$base3: #fdf6e3;
+$bg: #0e1111;
+$base0: #ff598f;
+$base1: #fd8a5e;
+$base2: #e0e300;
+$base3: #01dddd;
+$base4: #00bfaf;
+$base5: #9013fe;
 $white: #eeeeee;
-$yellow: #b58900;
-$altbase1: #9013fe;
-$altbase0: #e0d8c7;
+$border0: #e0d8c7;
+$border01: #b58900;
 $gutter-width: 1rem;
 $outer-margin: 2rem;
 $gutter-compensation: calc(($gutter-width * 0.5) * -1);

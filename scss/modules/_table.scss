@@ -5,12 +5,12 @@ table {
   border-collapse: collapse;
   margin-bottom: 1.5em;
   width: 100%;
-  background-color: $base02;
+  background-color: $bg;
 }
 
 th,
 td {
-  border-bottom: 1px solid $base01 !important;
+  border-bottom: 1px solid $border0 !important;
   padding-bottom: 0.25em;
   padding-top: 0.25em;
   text-align: left;

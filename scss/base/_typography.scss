@@ -8,7 +8,7 @@ h6 {
   font-size: $header-size;
   font-weight: bold;
   line-height: $header-line-height;
-  color: $altbase1;
+  color: $base5;
 }
 
 p.caption {
@@ -16,7 +16,7 @@ p.caption {
   font-family: $secondary-font-face;
   font-weight: normal;
   line-height: $caption-line-height;
-  color: $altbase1;
+  color: $base5;
 }
 
 .heading {
@@ -25,5 +25,5 @@ p.caption {
 }
 
 .alert {
-  color: $altbase1;
+  color: $base5;
 }
