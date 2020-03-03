@@ -22,10 +22,14 @@ function createWindow() {
         // transparent: false,
         transparent: true,
         frame: false,
-        fullscreen: true,
+        // reset for final version
+        fullscreen: false,
         webPreferences: {
             preload: path.join(__dirname, "preload.js")
-        }
+        },
+        // double for full version
+        width: 2880,
+        height: 2120
     });
     // and load the index.html of the app.
     mainWindow.loadFile(path.join(__dirname, "../index.html"));
