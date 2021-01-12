@@ -33,7 +33,7 @@ function drawLineChart(element, datasets, title, chartHeight) {
                                 enabled: true
                             }
                         }
-                    }
+                    },
                 ],
                 yAxes: [
                     {
@@ -43,7 +43,7 @@ function drawLineChart(element, datasets, title, chartHeight) {
                             display: true,
                             labelString: "value"
                         }
-                    }
+                    },
                 ]
             }
         }

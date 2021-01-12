@@ -4,40 +4,40 @@ export function drawLineChart(
   element: string,
   datasets: object[],
   title: string,
-  chartHeight: number
+  chartHeight: number,
 ) {
   const ctx = document.getElementById(element) as HTMLCanvasElement;
   // ctx.height = chartHeight;
   // console.log("🚀", ctx, chartHeight);
-  let lineChart = new Chart(ctx, {
+  const lineChart = new Chart(ctx, {
     type: "line",
     data: {
-      datasets: datasets
+      datasets,
     },
     options: {
       responsive: true,
       title: {
         display: true,
-        text: title
+        text: title,
       },
       scales: {
         xAxes: [
           {
             type: "time",
             time: {
-              unit: "day"
+              unit: "day",
             },
             display: true,
             scaleLabel: {
               display: true,
-              labelString: "Date"
+              labelString: "Date",
             },
             ticks: {
               major: {
-                enabled: true
-              }
-            }
-          }
+                enabled: true,
+              },
+            },
+          },
         ],
         yAxes: [
           {
@@ -45,12 +45,12 @@ export function drawLineChart(
             stacked: false,
             scaleLabel: {
               display: true,
-              labelString: "value"
-            }
-          }
-        ]
-      }
-    }
+              labelString: "value",
+            },
+          },
+        ],
+      },
+    },
   });
 }
 

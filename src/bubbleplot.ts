@@ -3,39 +3,39 @@ import { Chart } from "chart.js";
 export function drawBubbleplot(
   element: string,
   datasets: object[],
-  title: string[]
+  title: string[],
 ) {
   const ctx = document.getElementById(element) as HTMLCanvasElement;
 
-  let bubbleplot = new Chart(ctx, {
+  const bubbleplot = new Chart(ctx, {
     type: "bubble",
     data: {
-      datasets: datasets
+      datasets,
     },
     options: {
       responsive: true,
       title: {
         display: true,
-        text: title
+        text: title,
       },
       scales: {
         xAxes: [
           {
             type: "time",
             time: {
-              unit: "hour"
+              unit: "hour",
             },
             display: true,
             scaleLabel: {
               display: true,
-              labelString: "Time"
+              labelString: "Time",
             },
             ticks: {
               major: {
-                enabled: true
-              }
-            }
-          }
+                enabled: true,
+              },
+            },
+          },
         ],
         yAxes: [
           {
@@ -43,12 +43,12 @@ export function drawBubbleplot(
             stacked: true,
             scaleLabel: {
               display: true,
-              labelString: "Wait in minutes"
-            }
-          }
-        ]
-      }
-    }
+              labelString: "Wait in minutes",
+            },
+          },
+        ],
+      },
+    },
   });
 }
 

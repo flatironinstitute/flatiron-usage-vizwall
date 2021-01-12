@@ -31,7 +31,7 @@ function drawBubbleplot(element, datasets, title) {
                                 enabled: true
                             }
                         }
-                    }
+                    },
                 ],
                 yAxes: [
                     {
@@ -41,7 +41,7 @@ function drawBubbleplot(element, datasets, title) {
                             display: true,
                             labelString: "Wait in minutes"
                         }
-                    }
+                    },
                 ]
             }
         }

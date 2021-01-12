@@ -34,7 +34,7 @@ function drawTable(element, dataset, labels, title) {
     }
     var _loop_1 = function (row) {
         buildRow(row);
-        //remove accounts from list
+        // remove accounts from list
         accounts = accounts.filter(function (account) { return account !== row.metric.account; });
     };
     for (var _i = 0, dataset_1 = dataset; _i < dataset_1.length; _i++) {

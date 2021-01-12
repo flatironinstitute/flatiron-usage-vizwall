@@ -2,7 +2,17 @@
 
 An Electron application to display live slurm usage metrics at the Flatiron Institute.
 
-## Startup Scripts
+## Installation
+
+Before proceeding with Slurm Watch you need to install [Node.js](https://nodejs.dev/). We recommend that you install either the latest LTS or Current version available.
+
+Once you have copied this repository locally, install Electron and the other neccessary npm packages by running:
+
+```
+npm install
+```
+
+### Startup Scripts
 
 To start SlurmWatch locally use:
 
@@ -23,7 +33,8 @@ npm run lint
 - Stacked bar: CPUs free by location / total CPU nodes available
 - Doughnuts: GPUs free by location (rusty & popeye)
 - Table: Current queue length by center
-- Line graph of nodes by center over 7 days
+- Line graph: Nodes by center over 7 days
+- Bubbleplot: Wait time by center over 24 hours
 
 ### Charts To Do
 

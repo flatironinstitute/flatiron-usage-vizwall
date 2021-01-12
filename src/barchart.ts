@@ -3,13 +3,13 @@ import { Chart } from "chart.js";
 export function drawStackedBarChart(
   element: string,
   datasets: object[],
-  labels: string[]
+  labels: string[],
 ) {
   const ctx = document.getElementById(element) as HTMLCanvasElement;
   const stackedBarChart = new Chart(ctx, {
     data: {
       datasets,
-      labels
+      labels,
     },
     options: {
       scales: {
@@ -18,13 +18,13 @@ export function drawStackedBarChart(
           {
             stacked: true,
             ticks: {
-              beginAtZero: true
-            }
-          }
-        ]
-      }
+              beginAtZero: true,
+            },
+          },
+        ],
+      },
     },
-    type: "bar"
+    type: "bar",
   });
 }
 
