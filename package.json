@@ -31,7 +31,7 @@
     "dotenv": "^8.2.0",
     "electron-fetch": "^1.3.0",
     "electron-reload": "^1.5.0",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "randomcolor": "^0.5.4"
   }
 }
