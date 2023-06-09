@@ -2,62 +2,12 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>SLURM WATCH: Flatiron Slurm Data Usage</title>
-    <link
-      href="https://fonts.googleapis.com/css?family=IBM+Plex+Mono:400,400i|IBM+Plex+Sans+Condensed:400,400i|IBM+Plex+Sans:100,100i,400,400i,700,700i|IBM+Plex+Serif:400,400i&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="./style.css" />
+    <title>Hello World!</title>
+
   </head>
-  <body class="body">
-    <div class="column">
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col-xs-12">
-            <div class="chart-container">
-              <canvas id="nodeChart"></canvas>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col-xs-2">
-            <div class="chart-container">
-              <h1 class="heading">⚡ SLURM WATCH ⚡</h1>
-              <h4 id="loading" class="alert">Loading</h4>
-              <h4 id="lastMeasuredTime" class="alert"></h4>
-            </div>
-          </div>
-          <div class="col-xs-5">
-            <div class="chart-container">
-              <canvas id="cpuChart"></canvas>
-            </div>
-          </div>
-          <div class="col-xs-5 row">
-            <div class="chart-container row middle-xs">
-              <div class="col-xs-6"><canvas id="gpuChart1"></canvas></div>
-              <div class="col-xs-6"><canvas id="gpuChart2"></canvas></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col-xs-10">
-            <div class="chart-container">
-              <canvas id="bubbleplot"></canvas>
-            </div>
-          </div>
-          <div class="col-xs-2">
-            <div class="chart-container">
-              <p>Current Queue Length</p>
-              <div id="queueTable"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <script src="./dist/renderer.js"></script>
+  <body>
+    <h1>💖 Hello World!</h1>
+    <p>Welcome to your Electron application.</p>
+    <script type="module" src="/src/renderer.js"></script>
   </body>
 </html>
