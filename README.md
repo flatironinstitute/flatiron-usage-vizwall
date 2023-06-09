@@ -50,5 +50,5 @@ npm run start
 
 ### Other charts for potential v2?
 
-- CPU efficiency by center as racecars
-- Toggle num queue items by center with queue items by location (gordon etc)
+- [ ] CPU efficiency by center as racecars
+- [ ] Toggle num queue items by center with queue items by location (gordon etc)
