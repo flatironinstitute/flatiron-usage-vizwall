@@ -1,20 +1,29 @@
-// @ts-check
+import type { Signal } from "@preact/signals-react";
+import React from "react";
+import { signal, computed } from "@preact/signals-react";
+import * as d3 from "d3";
 
-import "./index.css";
-import d3Time from "d3-time";
+const data_signal: Signal<any[]> = signal([]);
 
-/**
- * @typedef {{
- *   label: string;
- *   name: string;
- *   query: string;
- *   range_offset?: number;
- *   range_unit?: "day";
- *   range_step?: string;
- * }} QueryObject
- */
+const data_loaded_signal: Signal<boolean> = computed(
+  () => data_signal.value.length > 0
+);
 
-const queries = [
+interface QueryObject {
+  label: string;
+  name: string;
+  query: string;
+  range_offset?: number;
+  range_unit?: "day";
+  range_step?: string;
+}
+
+interface PrometheusResult {
+  metric: { [key: string]: string };
+  value: [number, string];
+}
+
+const queries: QueryObject[] = [
   {
     label: "Free CPUs (non-GPU) by location",
     name: "cpus_free",
@@ -49,8 +58,7 @@ const queries = [
   },
 ];
 
-/** @type {QueryObject[]} */
-const range_queries = [
+const range_queries: QueryObject[] = [
   {
     label: "Rusty queue wait time over 24 hours",
     name: "rusty_wait_time",
@@ -78,20 +86,13 @@ const range_queries = [
   },
 ];
 
-await initialize();
-
-async function initialize() {
-  log("Initializing");
-  const test = await fetch_prometheus_data(queries[0], false);
-  console.log(test);
-}
-
 /**
  * Fetch data from Prometheus
- * @param {QueryObject} query_object
- * @param {boolean} is_range_query
  */
-async function fetch_prometheus_data(query_object, is_range_query) {
+async function fetch_prometheus_data(
+  query_object: QueryObject,
+  is_range_query: boolean
+): Promise<PrometheusResult> {
   log("Fetching data", query_object, is_range_query);
   const base = is_range_query
     ? "http://prometheus.flatironinstitute.org/api/v1/query_range"
@@ -100,23 +101,23 @@ async function fetch_prometheus_data(query_object, is_range_query) {
   const search_params = new URLSearchParams({
     query: query_object.query,
   });
+  if (is_range_query) {
+    const end = new Date();
+    if (query_object.range_unit === "day") {
+      const start = d3.timeDay.offset(end, -query_object.range_offset);
+      search_params.set("start", start.toISOString());
+      search_params.set("end", end.toISOString());
+      search_params.set("step", query_object.range_step);
+    }
+  }
   url.search = search_params.toString();
   log("URL", url.toString());
-  // let url = base + encodeURI(queryObj.query);
-  // if (isRange) {
-  //   const end = moment().subtract(10, "minutes").toISOString();
-  //   const start = moment().subtract(queryObj.amount, queryObj.unit).toISOString();
-  //   url = url + encodeURI(`&start=${start}&end=${end}&step=${queryObj.step}`);
-  // }
-  return await fetch(url, {
-    headers: new Headers({
-      // Authorization: `Basic ${base64.encode(`${user}:${pass}`)}`,
-    }),
-  })
-    .then((res) => res.json())
+  return await d3
+    .json(url)
     .then((body) => {
       if (body.status === "success") {
-        return body.data.result;
+        const results: PrometheusResult[] = body.data.result;
+        return results;
       } else {
         throw new Error(`Prometheus error: ${body.error}`);
       }
@@ -125,6 +126,32 @@ async function fetch_prometheus_data(query_object, is_range_query) {
     .catch((err) => console.log(Error(err.statusText)));
 }
 
+async function fetch_all_prometheus_data() {
+  const non_range_data = queries.map(async (query_object) => ({
+    query: query_object,
+    data: await fetch_prometheus_data(query_object, false),
+  }));
+
+  const range_data = range_queries.map(async (query_object) => ({
+    query: query_object,
+    data: await fetch_prometheus_data(query_object, true),
+  }));
+
+  return Promise.all([...non_range_data, ...range_data]);
+}
+
 function log(...args) {
   console.log(`📊`, ...args);
+}
+
+export default function App() {
+  React.useEffect(() => {
+    log("App mounted");
+    log(`Fetching data...`);
+    fetch_all_prometheus_data().then((data) => {
+      log("Data fetched", data);
+      data_signal.value = data;
+    });
+  }, []);
+  return <div>loaded data? {data_loaded_signal.value.toString()}</div>;
 }
