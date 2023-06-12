@@ -28,4 +28,3 @@ export function drawStackedBarChart(
   });
 }
 
-module.exports = { drawStackedBarChart };

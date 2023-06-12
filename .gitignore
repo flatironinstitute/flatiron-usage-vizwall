@@ -15,3 +15,5 @@ variables.env
 
 # vscode files
 .vscode/
+/old
+/.vite

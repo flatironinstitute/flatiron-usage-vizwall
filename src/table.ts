@@ -62,4 +62,3 @@ export function drawTable(
   }
 }
 
-module.exports = { drawTable };

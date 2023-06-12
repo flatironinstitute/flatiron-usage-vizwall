@@ -52,4 +52,3 @@ export function drawBubbleplot(
   });
 }
 
-module.exports = { drawBubbleplot };

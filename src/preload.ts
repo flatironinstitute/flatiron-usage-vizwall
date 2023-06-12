@@ -1,5 +1,6 @@
-import * as base64 from "base-64";
-import * as moment from "moment";
+// @ts-check
+
+import * as d3 from "d3";
 import * as Barchart from "./barchart";
 import * as Bubbleplot from "./bubbleplot";
 import * as Doughnut from "./doughnut";
@@ -9,7 +10,9 @@ import * as Table from "./table";
 const user = process.env.PROMETHEUS_USER;
 const pass = process.env.PROMETHEUS_PASS;
 
-interface Dict<T> { [name: string]: T }
+interface Dict<T> {
+  [name: string]: T;
+}
 
 interface QueryObject {
   label: string;
@@ -46,7 +49,7 @@ function setLastMeasuredTime() {
 }
 
 function getNow() {
-  return moment().format("MMMM Do YYYY, h:mm:ss a");
+  return new Date().toLocaleString();
 }
 
 function getColor(center: string) {
@@ -73,7 +76,8 @@ const queries = [
   {
     label: "Allocated CPUs (non-GPU) by location",
     name: "cpuAlloc",
-    query: 'sum(slurm_node_cpus{state="alloc",nodes!="gpu"}) by (cluster,nodes)',
+    query:
+      'sum(slurm_node_cpus{state="alloc",nodes!="gpu"}) by (cluster,nodes)',
   },
   {
     label: "Percent Free CPUs (non-GPU) by location",
@@ -102,7 +106,8 @@ const rangeQueries = [
   {
     label: "Rusty queue wait time over 24 hours",
     name: "waitTime",
-    query: 'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)',
+    query:
+      'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)',
     amount: 1,
     unit: "day",
     step: "15m", // prometheus duration format
@@ -238,17 +243,16 @@ async function fetchData(queryObj: QueryObject, isRange: boolean) {
   let url = base + encodeURI(queryObj.query);
 
   if (isRange) {
-    const end = moment().subtract(10, "minutes").toISOString();
-    const start = moment().subtract(queryObj.amount, queryObj.unit).toISOString();
+    const end = new Date().toISOString();
+    let start: string;
+    if (queryObj.unit === "day") {
+      start = d3.timeDay.offset(new Date(), -queryObj.amount).toISOString();
+    }
 
     url = url + encodeURI(`&start=${start}&end=${end}&step=${queryObj.step}`);
   }
 
-  return await fetch(url, {
-    headers: new Headers({
-      Authorization: `Basic ${base64.encode(`${user}:${pass}`)}`,
-    }),
-  })
+  return await fetch(url)
     .then((res) => res.json())
     .then((body) => {
       if (body.status === "success") {
@@ -280,18 +284,28 @@ function filterDataMaster(char: string) {
 }
 
 function filterDataMasterWithoutPopeye(char: string) {
-  return filterDataMaster(char)[0].data.filter((center: PrometheusObject) => center.metric.account !== "popeye");
+  return filterDataMaster(char)[0].data.filter(
+    (center: PrometheusObject) => center.metric.account !== "popeye"
+  );
 }
 
 function mapDict<T, V>(data: Dict<T>, f: (d: T) => V): Dict<V> {
   const r: Dict<V> = {};
-  for (const k in data) { r[k] = f(data[k]); }
+  for (const k in data) {
+    r[k] = f(data[k]);
+  }
   return r;
 }
 
-function dictBy<T, V>(data: T[], key: (d: T) => string, value: (d: T) => V): Dict<V> {
+function dictBy<T, V>(
+  data: T[],
+  key: (d: T) => string,
+  value: (d: T) => V
+): Dict<V> {
   const r: Dict<V> = {};
-  for (const d of data) { r[key(d)] = value(d); }
+  for (const d of data) {
+    r[key(d)] = value(d);
+  }
   return r;
 }
 
@@ -299,7 +313,7 @@ function valueByCluster(data: PrometheusObject[]): Dict<string> {
   return dictBy(
     data,
     (d) => d.metric.cluster,
-    (d) => d.value[1],
+    (d) => d.value[1]
   );
 }
 
@@ -362,9 +376,16 @@ const barCharts: BarChart[] = [
   },
 ];
 
-function findBarChart(chartObj: PrometheusObject[], chart: BarChart): string | undefined {
-  const o = chartObj.find((o) => o.metric.cluster == chart.cluster && o.metric.nodes == chart.nodes);
-  if (o) { return o.value[1]; }
+function findBarChart(
+  chartObj: PrometheusObject[],
+  chart: BarChart
+): string | undefined {
+  const o = chartObj.find(
+    (o) => o.metric.cluster == chart.cluster && o.metric.nodes == chart.nodes
+  );
+  if (o) {
+    return o.value[1];
+  }
 }
 
 // Parse data for Chart
@@ -398,7 +419,10 @@ function combineBubbleData(waittimes: [any], queuelengths: [any]) {
     // todo: better error mechanism
     console.error("length mismatch", waittimes, queuelengths);
   }
-  const shorter = waittimes.length < queuelengths.length ? waittimes.length : queuelengths.length;
+  const shorter =
+    waittimes.length < queuelengths.length
+      ? waittimes.length
+      : queuelengths.length;
   for (let i = 0; i < shorter; i++) {
     const tstamp1: number = waittimes[i][0];
     const y: string = waittimes[i][1];
@@ -410,7 +434,7 @@ function combineBubbleData(waittimes: [any], queuelengths: [any]) {
       console.error("mismatch", "⏰", waittimes[i], "📐", queuelengths[i]);
     } else {
       combined.push({
-        x: moment.unix(tstamp1), // timestamp
+        x: new Date(tstamp1 * 1e3),
         y: Math.floor(parseInt(y) / 60000), // waittime string
         r, // queue length
       });
@@ -425,10 +449,15 @@ function getBubbleplotData() {
   const combo = new Array<Object>();
   for (let i = 0; i < waitTimes.length; i++) {
     if (waitTimes[i].metric.account === queueLengths[i].metric.account) {
-      const datamap = combineBubbleData(waitTimes[i].values, queueLengths[i].values);
+      const datamap = combineBubbleData(
+        waitTimes[i].values,
+        queueLengths[i].values
+      );
       const border = getColor(waitTimes[i].metric.account);
       console.table(waitTimes[i].metric.account, border);
-      const background = border.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
+      const background = border
+        ?.replace(/rgb/i, "rgba")
+        .replace(/\)/i, ",0.2)");
       combo.push({
         label: waitTimes[i].metric.account,
         backgroundColor: background,
@@ -442,7 +471,7 @@ function getBubbleplotData() {
       console.error(
         "Bubble data objects out of order",
         typeof waitTimes[i].metric.account,
-        typeof queueLengths[i].metric.account,
+        typeof queueLengths[i].metric.account
       );
     }
   }
@@ -469,7 +498,7 @@ function buildBarChart() {
   Barchart.drawStackedBarChart(
     "cpuChart",
     cpuDatasets,
-    barCharts.map((c) => c.label),
+    barCharts.map((c) => c.label)
   );
 }
 
@@ -483,7 +512,7 @@ function buildDoughnutCharts() {
         [gpuData[value]],
         `gpuChart${index}`,
         ["Free", "In Use"],
-        `${value.toString().toUpperCase()}`,
+        `${value.toString().toUpperCase()}`
       );
     }
     index++;
@@ -492,22 +521,36 @@ function buildDoughnutCharts() {
 
 function buildTable() {
   const currentQueuedData = dataMasterDict.queued;
-  currentQueuedData.sort((a: PrometheusObject, b: PrometheusObject) => (a.metric.account > b.metric.account ? 1 : -1));
-  Table.drawTable("queueTable", currentQueuedData, ["Center", "Count"], "Current Queue Count");
+  currentQueuedData.sort((a: PrometheusObject, b: PrometheusObject) =>
+    a.metric.account > b.metric.account ? 1 : -1
+  );
+  Table.drawTable(
+    "queueTable",
+    currentQueuedData,
+    ["Center", "Count"],
+    "Current Queue Count"
+  );
 }
 
 function buildLineChart() {
   const nodeCount = dataMasterDict.nodeCount;
-  nodeCount.sort((a: PrometheusObject, b: PrometheusObject) => (a.metric.account > b.metric.account ? 1 : -1));
+  nodeCount.sort((a: PrometheusObject, b: PrometheusObject) =>
+    a.metric.account > b.metric.account ? 1 : -1
+  );
   const nodecontent = [];
   for (const a of nodeCount) {
     const background = getColor(a.metric.account);
-    if (!background) { continue; }
+    if (!background) {
+      continue;
+    }
     const border = background.replace(/rgb/i, "rgba").replace(/\)/i, ",0.2)");
     const dataMap: any[] = [];
     a.values.forEach((val) => {
       const [time, qty] = val;
-      dataMap.push({ y: parseInt(qty), x: moment.unix(time) });
+      dataMap.push({
+        y: parseInt(qty),
+        x: new Date(time * 1e3),
+      });
     });
     nodecontent.push({
       label: a.metric.account,
@@ -518,7 +561,12 @@ function buildLineChart() {
     });
   }
 
-  LineChart.drawLineChart("nodeChart", nodecontent, "Node counts by center for the last 7 Days", chartHeight);
+  LineChart.drawLineChart(
+    "nodeChart",
+    nodecontent,
+    "Node counts by center for the last 7 Days",
+    chartHeight
+  );
 }
 
 function buildBubbleplot() {
@@ -569,7 +617,7 @@ async function doTheThing() {
   dataMasterDict = dictBy(
     dataMaster,
     (d) => d.name,
-    (d) => d.data,
+    (d) => d.data
   );
 
   console.table(dataMaster);

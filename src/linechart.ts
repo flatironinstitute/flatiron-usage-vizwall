@@ -54,4 +54,3 @@ export function drawLineChart(
   });
 }
 
-module.exports = { drawLineChart };
