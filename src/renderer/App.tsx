@@ -1,147 +1,149 @@
 import type { Signal } from "@preact/signals-react";
+import type { PrometheusResult, PrometheusResultsObject } from "./fetch-data";
+
 import React from "react";
 import { signal, computed } from "@preact/signals-react";
 import * as d3 from "d3";
+import { log } from "./shared";
+import { fetch_all_prometheus_data } from "./fetch-data";
 
-const data_signal: Signal<any[]> = signal([]);
+interface PrometheusRow {
+  account?: string;
+  cluster?: string;
+  nodes?: string;
+  user?: string;
+  date: Date;
+  value: number;
+  raw: PrometheusResult;
+  path?: string;
+}
+
+const data_signal: Signal<PrometheusResultsObject> = signal(null);
 
 const data_loaded_signal: Signal<boolean> = computed(
-  () => data_signal.value.length > 0
+  () => data_signal.value !== null
 );
 
-interface QueryObject {
-  label: string;
-  name: string;
-  query: string;
-  range_offset?: number;
-  range_unit?: "day";
-  range_step?: string;
-}
+function SunburstChart() {
+  const size = 1000;
+  const radius = size * 0.5;
+  const padding = 3;
 
-interface PrometheusResult {
-  metric: { [key: string]: string };
-  value: [number, string];
-}
+  const get_path = (d: PrometheusResult) => {
+    const { metric } = d;
+    const { account, cluster, nodes, user } = metric;
+    const path = [account, cluster, nodes, user].join(`/`);
+    return path;
+  };
 
-const queries: QueryObject[] = [
-  {
-    label: "Free CPUs (non-GPU) by location",
-    name: "cpus_free",
-    query: 'sum(slurm_node_cpus{state="free",nodes!="gpu"}) by (cluster,nodes)',
-  },
-  {
-    label: "Allocated CPUs (non-GPU) by location",
-    name: "cpus_allocated",
-    query:
-      'sum(slurm_node_cpus{state="alloc",nodes!="gpu"}) by (cluster,nodes)',
-  },
-  {
-    label: "Percent Free CPUs (non-GPU) by location",
-    name: "cpus_percent_free",
-    query:
-      'sum(slurm_node_cpus{state="free",nodes!="gpu"}) by (cluster,nodes) / sum(slurm_node_cpus{nodes!="gpu"}) by (cluster,nodes)',
-  },
-  {
-    label: "GPUs free by location",
-    name: "gpus_free",
-    query: 'sum(slurm_node_gpus{state="free",nodes="gpu"}) by (cluster)',
-  },
-  {
-    label: "GPUs allocated by location",
-    name: "gpus_allocated",
-    query: 'sum(slurm_node_gpus{state="alloc",nodes="gpu"}) by (cluster)',
-  },
-  {
-    label: "Slurm pending job requests",
-    name: "slurm_pending_jobs",
-    query: 'sum(slurm_job_count{state="pending"}) by (account)',
-  },
-];
+  const placeholder_data: PrometheusResult[] = [];
 
-const range_queries: QueryObject[] = [
-  {
-    label: "Rusty queue wait time over 24 hours",
-    name: "rusty_wait_time",
-    query:
-      'sum(slurm_job_seconds{cluster="iron",state="pending"}) by (account)',
-    range_offset: 1,
-    range_unit: "day",
-    range_step: "15m",
-  },
-  {
-    label: "Rusty queue length over 24 hours",
-    name: "rusty_queue_length",
-    query: 'sum(slurm_job_count{state="pending"}) by (account)',
-    range_offset: 1,
-    range_unit: "day",
-    range_step: "15m",
-  },
-  {
-    label: "Node counts by center for the last 7 Days",
-    name: "node_count",
-    query: 'sum(slurm_job_nodes{state="running"}) by (account)',
-    range_offset: 7,
-    range_unit: "day",
-    range_step: "90m",
-  },
-];
-
-/**
- * Fetch data from Prometheus
- */
-async function fetch_prometheus_data(
-  query_object: QueryObject,
-  is_range_query: boolean
-): Promise<PrometheusResult> {
-  log("Fetching data", query_object, is_range_query);
-  const base = is_range_query
-    ? "http://prometheus.flatironinstitute.org/api/v1/query_range"
-    : "http://prometheus.flatironinstitute.org/api/v1/query";
-  const url = new URL(base);
-  const search_params = new URLSearchParams({
-    query: query_object.query,
+  // const data_raw = data_signal.value?.slurm_job_seconds ?? placeholder_data;
+  const data_raw = data_signal.value?.slurm_job_cpus ?? placeholder_data;
+  const data_flat: PrometheusRow[] = data_raw.map((d) => {
+    const { metric, value } = d;
+    const path = get_path(d);
+    return {
+      ...metric,
+      date: new Date(value[0] * 1e3),
+      value: Number(value[1]),
+      raw: d,
+      path,
+    };
   });
-  if (is_range_query) {
-    const end = new Date();
-    if (query_object.range_unit === "day") {
-      const start = d3.timeDay.offset(end, -query_object.range_offset);
-      search_params.set("start", start.toISOString());
-      search_params.set("end", end.toISOString());
-      search_params.set("step", query_object.range_step);
-    }
-  }
-  url.search = search_params.toString();
-  log("URL", url.toString());
-  return await d3
-    .json(url)
-    .then((body) => {
-      if (body.status === "success") {
-        const results: PrometheusResult[] = body.data.result;
-        return results;
-      } else {
-        throw new Error(`Prometheus error: ${body.error}`);
-      }
-    })
-    // tslint:disable-next-line
-    .catch((err) => console.log(Error(err.statusText)));
+
+  const descendants: d3.HierarchyRectangularNode<PrometheusRow>[] = (() => {
+    if (!data_flat.length) return [];
+    const stratifier = d3.stratify<PrometheusRow>().path((d) => d.path);
+    const hierarchy = stratifier(data_flat);
+    // Compute the numeric value for each entity
+    // This adds a `value` property to each node
+    hierarchy
+      .sum((d) => d?.value)
+      .sort((a, b) => d3.ascending(a.value, b.value));
+    // Compute the layout. This adds x0, x1, y0, y1, and data to each node
+    const hierarchy_with_coords = d3
+      .partition<PrometheusRow>()
+      .size([2 * Math.PI, radius])(hierarchy);
+    log(`hierarchy`, hierarchy_with_coords);
+    return hierarchy_with_coords.descendants();
+  })();
+
+  const arc_generator = d3
+    .arc<d3.HierarchyRectangularNode<PrometheusRow>>()
+    .startAngle((d) => d.x0)
+    .endAngle((d) => d.x1)
+    .padAngle((d) => Math.min((d.x1 - d.x0) / 2, (2 * padding) / radius))
+    .padRadius(radius / 2)
+    .innerRadius((d) => d.y0)
+    .outerRadius((d) => d.y1 - padding);
+
+  // log(`descendants`, descendants);
+
+  const paths: JSX.Element[] = descendants.map((d, i) => {
+    if (d.depth === 0) return null;
+    const path_definition = arc_generator(d);
+    return (
+      <path
+        key={d.id}
+        data-id={d.id}
+        d={path_definition}
+        stroke="none"
+        fill="rgba(255, 255, 255, 0.3)"
+      ></path>
+    );
+  });
+
+  const labels: JSX.Element[] = descendants.map((d, i) => {
+    const label = d.id.split(`/`).at(-1);
+    if (!label.length) return null;
+    if (((d.y0 + d.y1) / 2) * (d.x1 - d.x0) < 20) return null;
+    const centroid = arc_generator.centroid(d);
+    const [x, y] = centroid;
+    const theta = (d.x0 + d.x1) / 2;
+    const theta_degrees = (theta * 180) / Math.PI;
+    const rotation = theta_degrees + 90;
+    const flip = rotation < 270 ? 180 : 0;
+    const transform = `translate(${x}, ${y}) rotate(${rotation + flip})`;
+    return (
+      <g
+        transform={transform}
+        style={{ textAnchor: `middle` }}
+        data-rotation={rotation}
+      >
+        <text key={d.id} dy={"0.2rem"} fill="currentColor">
+          {label}
+        </text>
+      </g>
+    );
+  });
+
+  return (
+    // <div className="relative outline outline-4 outline-orange-500 col-span-6 row-span-5">
+    <div className="relative col-span-6 row-span-5">
+      <svg
+        className="overflow-visible absolute w-full h-full text-white text-xs"
+        viewBox={`${-(size / 2)} ${-(size / 2)} ${size} ${size}`}
+        style={{ vectorEffect: `non-scaling-stroke` }}
+      >
+        {paths}
+        {labels}
+      </svg>
+    </div>
+  );
 }
 
-async function fetch_all_prometheus_data() {
-  const non_range_data = queries.map(async (query_object) => ({
-    query: query_object,
-    data: await fetch_prometheus_data(query_object, false),
-  }));
-
-  const range_data = range_queries.map(async (query_object) => ({
-    query: query_object,
-    data: await fetch_prometheus_data(query_object, true),
-  }));
-
-  return Promise.all([...non_range_data, ...range_data]);
-}
-
-function log(...args) {
-  console.log(`📊`, ...args);
+function GridContainer({
+  children,
+}: {
+  children?: React.ReactNode;
+}): JSX.Element {
+  return (
+    <div className="grid w-full aspect-video grid-cols-12 grid-rows-6">
+      {/* <div className="grid outline outline-5 outline-red-500 w-full aspect-video grid-cols-12 grid-rows-6"> */}
+      {children}
+    </div>
+  );
 }
 
 export default function App() {
@@ -153,5 +155,12 @@ export default function App() {
       data_signal.value = data;
     });
   }, []);
-  return <div>loaded data? {data_loaded_signal.value.toString()}</div>;
+  return (
+    <>
+      <div>loaded data? {data_loaded_signal.value.toString()}</div>
+      <GridContainer>
+        <SunburstChart />
+      </GridContainer>
+    </>
+  );
 }
