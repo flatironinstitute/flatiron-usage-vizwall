@@ -7,6 +7,34 @@ import * as d3 from "d3";
 import { log } from "./shared";
 import { fetch_all_prometheus_data } from "./fetch-data";
 
+const colors = {
+  ccq: {
+    r: 132,
+    g: 91,
+    b: 142,
+  },
+  cca: {
+    r: 206,
+    g: 50,
+    b: 50,
+  },
+  ccm: {
+    r: 246,
+    g: 134,
+    b: 45,
+  },
+  ccb: {
+    r: 129,
+    g: 173,
+    b: 74,
+  },
+  ccn: {
+    r: 0,
+    g: 128,
+    b: 158,
+  },
+};
+
 interface PrometheusRow {
   account?: string;
   cluster?: string;
@@ -24,22 +52,37 @@ const data_loaded_signal: Signal<boolean> = computed(
   () => data_signal.value !== null
 );
 
-function SunburstChart() {
+function get_color(d: d3.HierarchyRectangularNode<PrometheusRow>) {
+  const { id } = d;
+  const parts = id.split(`/`);
+  const center = parts.find((d) => d in colors);
+  if (center) {
+    const rgb = colors[center];
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.4)`;
+  }
+  return `rgba(255, 255, 255, 0.2)`;
+}
+
+function SunburstChart({
+  data_key,
+  hierarchy,
+}: {
+  data_key: string;
+  hierarchy: Array<keyof PrometheusRow>;
+}): JSX.Element {
   const size = 1000;
   const radius = size * 0.5;
   const padding = 3;
 
   const get_path = (d: PrometheusResult) => {
     const { metric } = d;
-    const { account, cluster, nodes, user } = metric;
-    const path = [account, cluster, nodes, user].join(`/`);
+    const path = hierarchy.map((key) => metric[key]).join(`/`);
     return path;
   };
 
   const placeholder_data: PrometheusResult[] = [];
 
-  // const data_raw = data_signal.value?.slurm_job_seconds ?? placeholder_data;
-  const data_raw = data_signal.value?.slurm_job_cpus ?? placeholder_data;
+  const data_raw = data_signal.value?.[data_key] ?? placeholder_data;
   const data_flat: PrometheusRow[] = data_raw.map((d) => {
     const { metric, value } = d;
     const path = get_path(d);
@@ -83,21 +126,23 @@ function SunburstChart() {
   const paths: JSX.Element[] = descendants.map((d, i) => {
     if (d.depth === 0) return null;
     const path_definition = arc_generator(d);
+    const fill = get_color(d);
     return (
       <path
         key={d.id}
         data-id={d.id}
         d={path_definition}
         stroke="none"
-        fill="rgba(255, 255, 255, 0.3)"
+        fill={fill}
       ></path>
     );
   });
 
   const labels: JSX.Element[] = descendants.map((d, i) => {
-    const label = d.id.split(`/`).at(-1);
+    let label = d.id.split(`/`).at(-1);
     if (!label.length) return null;
     if (((d.y0 + d.y1) / 2) * (d.x1 - d.x0) < 20) return null;
+    if (label === `iron`) label = `rusty`;
     const centroid = arc_generator.centroid(d);
     const [x, y] = centroid;
     const theta = (d.x0 + d.x1) / 2;
@@ -119,8 +164,11 @@ function SunburstChart() {
   });
 
   return (
-    // <div className="relative outline outline-4 outline-orange-500 col-span-6 row-span-5">
     <div className="relative col-span-6 row-span-5">
+      <div className="absolute top-0 left-0 w-[1000px] text-xs">
+        <div>{data_key}</div>
+        <div>{hierarchy.join(" -> ")}</div>
+      </div>
       <svg
         className="overflow-visible absolute w-full h-full text-white text-xs"
         viewBox={`${-(size / 2)} ${-(size / 2)} ${size} ${size}`}
@@ -140,7 +188,6 @@ function GridContainer({
 }): JSX.Element {
   return (
     <div className="grid w-full aspect-video grid-cols-12 grid-rows-6">
-      {/* <div className="grid outline outline-5 outline-red-500 w-full aspect-video grid-cols-12 grid-rows-6"> */}
       {children}
     </div>
   );
@@ -158,8 +205,24 @@ export default function App() {
   return (
     <>
       <div>loaded data? {data_loaded_signal.value.toString()}</div>
+      <div className="h-10" />
       <GridContainer>
-        <SunburstChart />
+        <SunburstChart
+          data_key="slurm_job_cpus"
+          hierarchy={[`account`, `cluster`, `nodes`, `user`]}
+        />
+      </GridContainer>
+      <GridContainer>
+        <SunburstChart
+          data_key="slurm_job_cpus"
+          hierarchy={[`account`, `cluster`, `user`]}
+        />
+      </GridContainer>
+      <GridContainer>
+        <SunburstChart
+          data_key="slurm_job_cpus"
+          hierarchy={[`cluster`, `account`, `user`]}
+        />
       </GridContainer>
     </>
   );

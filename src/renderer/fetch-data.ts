@@ -118,18 +118,23 @@ async function fetch_prometheus_data(
   }
   url.search = search_params.toString();
   log("URL", url.toString());
-  return await d3
-    .json(url)
-    .then((body) => {
-      if (body.status === "success") {
-        const results: PrometheusResult[] = body.data.result;
-        return results;
-      } else {
-        throw new Error(`Prometheus error: ${body.error}`);
-      }
-    })
-    // tslint:disable-next-line
-    .catch((err) => console.log(Error(err.statusText)));
+  return (
+    d3
+      .json(url.toString())
+      .then((body: any) => {
+        if (body.status === "success") {
+          const results: PrometheusResult[] = body.data.result;
+          return results;
+        } else {
+          throw new Error(`Prometheus error: ${body.error}`);
+        }
+      })
+      // tslint:disable-next-line
+      .catch((err) => {
+        console.log(Error(err.statusText));
+        return [];
+      })
+  );
 }
 
 export async function fetch_all_prometheus_data(): Promise<{
