@@ -35,15 +35,18 @@ const colors = {
   },
 };
 
-interface PrometheusRow {
+interface PrometheusMetric {
   account?: string;
   cluster?: string;
   nodes?: string;
   user?: string;
-  date: Date;
+  partition?: string;
+}
+
+interface NodeData {
+  path: string;
   value: number;
-  raw: PrometheusResult;
-  path?: string;
+  raw: Array<PrometheusResult>;
 }
 
 const data_signal: Signal<PrometheusResultsObject> = signal(null);
@@ -52,7 +55,7 @@ const data_loaded_signal: Signal<boolean> = computed(
   () => data_signal.value !== null
 );
 
-function get_color(d: d3.HierarchyRectangularNode<PrometheusRow>) {
+function get_color(d: d3.HierarchyRectangularNode<NodeData>) {
   const { id } = d;
   const parts = id.split(`/`);
   const center = parts.find((d) => d in colors);
@@ -68,7 +71,7 @@ function SunburstChart({
   hierarchy,
 }: {
   data_key: string;
-  hierarchy: Array<keyof PrometheusRow>;
+  hierarchy: Array<keyof PrometheusMetric>;
 }): JSX.Element {
   const size = 1000;
   const radius = size * 0.5;
@@ -83,21 +86,30 @@ function SunburstChart({
   const placeholder_data: PrometheusResult[] = [];
 
   const data_raw = data_signal.value?.[data_key] ?? placeholder_data;
-  const data_flat: PrometheusRow[] = data_raw.map((d) => {
-    const { metric, value } = d;
+  const data_flat_with_duplicates: NodeData[] = data_raw.map((d) => {
+    const { value } = d;
     const path = get_path(d);
     return {
-      ...metric,
-      date: new Date(value[0] * 1e3),
-      value: Number(value[1]),
-      raw: d,
       path,
+      value: Number(value[1]),
+      raw: [d],
     };
   });
 
-  const descendants: d3.HierarchyRectangularNode<PrometheusRow>[] = (() => {
+  const data_flat: NodeData[] = d3
+    .groups(data_flat_with_duplicates, (d) => d.path)
+    .map(([path, values]) => {
+      return {
+        path,
+        value: d3.sum(values, (d) => d.value),
+        raw: values.map((d) => d.raw).flat(),
+      };
+    })
+    .flat();
+
+  const descendants: d3.HierarchyRectangularNode<NodeData>[] = (() => {
     if (!data_flat.length) return [];
-    const stratifier = d3.stratify<PrometheusRow>().path((d) => d.path);
+    const stratifier = d3.stratify<NodeData>().path((d) => d.path);
     const hierarchy = stratifier(data_flat);
     // Compute the numeric value for each entity
     // This adds a `value` property to each node
@@ -106,14 +118,14 @@ function SunburstChart({
       .sort((a, b) => d3.ascending(a.value, b.value));
     // Compute the layout. This adds x0, x1, y0, y1, and data to each node
     const hierarchy_with_coords = d3
-      .partition<PrometheusRow>()
+      .partition<NodeData>()
       .size([2 * Math.PI, radius])(hierarchy);
     log(`hierarchy`, hierarchy_with_coords);
     return hierarchy_with_coords.descendants();
   })();
 
   const arc_generator = d3
-    .arc<d3.HierarchyRectangularNode<PrometheusRow>>()
+    .arc<d3.HierarchyRectangularNode<NodeData>>()
     .startAngle((d) => d.x0)
     .endAngle((d) => d.x1)
     .padAngle((d) => Math.min((d.x1 - d.x0) / 2, (2 * padding) / radius))
@@ -121,6 +133,8 @@ function SunburstChart({
     .innerRadius((d) => d.y0)
     .outerRadius((d) => d.y1 - padding);
 
+  // log(`data_raw`, data_raw);
+  // log(`data_flat`, data_flat);
   // log(`descendants`, descendants);
 
   const paths: JSX.Element[] = descendants.map((d, i) => {
